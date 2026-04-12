@@ -9,9 +9,7 @@ namespace task1 {
 
 class ChangeCalculator {
 public:
-    static std::optional<ChangeResult> computeMinimalCoinChange(
-        Money amount,
-        const CoinInventory& inventory);
+	static std::optional< ChangeResult > computeMinimalCoinChange( Money amount, const CoinInventory& inventory );
 };
 
-} // namespace task1
+}  // namespace task1

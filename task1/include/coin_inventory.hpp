@@ -6,23 +6,23 @@ namespace task1 {
 
 class CoinInventory {
 public:
-    CoinInventory() = default;
-    
-    explicit CoinInventory(std::map<Money, int, std::greater<>> coins);
+	CoinInventory() = default;
 
-    const std::map<Money, int, std::greater<>>& getCoins() const;
+	explicit CoinInventory( std::map< Money, int, std::greater<> > coins );
 
-    void addCoin(Money denomination, int count = 1);
-    void addCoins(const CoinInventory& other);
+	const std::map< Money, int, std::greater<> >& getCoins() const;
 
-    bool removeCoin(Money denomination, int count = 1);
-    bool removeCoins(const std::map<Money, int, std::greater<>>& coins);
+	void addCoin( Money denomination, int count = 1 );
+	void addCoins( const CoinInventory& other );
 
-    std::size_t count(Money denomination) const;
-    Money total() const;
+	bool removeCoin( Money denomination, int count = 1 );
+	bool removeCoins( const std::map< Money, int, std::greater<> >& coins );
+
+	std::size_t count( Money denomination ) const;
+	Money total() const;
 
 private:
-    std::map<Money, int, std::greater<>> coins_;
+	std::map< Money, int, std::greater<> > coins_;
 };
 
-} // namespace task1
+}  // namespace task1
