@@ -1,0 +1,24 @@
+{
+    "cSpell.words": [
+      "fcoverage",
+      "fprofile",
+      "novomatic",
+      "PROFDATA",
+      "profraw",
+      "smod"
+    ],
+
+   "cmake.configureSettings": {
+    "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/build/conan_toolchain.cmake",
+    "ENABLE_COVERAGE": "ON"
+  },
+
+  "cmake.testEnvironment": {
+  "LLVM_PROFILE_FILE": "${command:cmake.buildDirectory}/coverage/coverage-%p.profraw"
+  },
+  "cmake.postRunCoverageTarget": "coverage",
+  "cmake.coverageInfoFiles": [
+    "${command:cmake.buildDirectory}/coverage/lcov.info"
+  ],
+
+}
