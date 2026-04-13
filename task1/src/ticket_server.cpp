@@ -53,11 +53,15 @@ std::optional< ReservationResult > TicketServer::reserveTicket( const std::strin
 	ticket->status = TicketStatus::Reserved;
 
 	const auto now = clock_();
-	Reservation res{ next_reservation_id_++, ticket->id, now, now + reservation_timeout_ };
+	Reservation res{ .id         = next_reservation_id_++,
+	                 .ticket_id  = ticket->id,
+	                 .created_at = now,
+	                 .expires_at = now + reservation_timeout_ };
 
 	reservations_.push_back( res );
 
-	return ReservationResult{ ticket->type, res.id, ticket->id, ticket->price };
+	return ReservationResult{
+	    .ticket_type = ticket->type, .reservation_id = res.id, .ticket_id = ticket->id, .price = ticket->price };
 }
 
 bool TicketServer::cancelReservation( ReservationId reservation_id ) {
@@ -89,7 +93,8 @@ std::variant< PurchaseSuccess, PurchaseFailure > TicketServer::finalizePurchase(
 	auto fail = [ & ]( PurchaseError err, std::string msg ) {
 		if ( ticket ) ticket->status = TicketStatus::Available;
 		removeReservation( reservation_id );
-		return PurchaseFailure{ err, inserted_coins.getCoins(), std::move( msg ) };
+		return PurchaseFailure{
+		    .error = err, .returned_coins = inserted_coins.getCoins(), .message = std::move( msg ) };
 	};
 
 	if ( !res || !ticket || ticket->status != TicketStatus::Reserved ) {
@@ -119,7 +124,12 @@ std::variant< PurchaseSuccess, PurchaseFailure > TicketServer::finalizePurchase(
 
 	removeReservation( reservation_id );
 
-	return PurchaseSuccess{ ticket->id, paid, ticket->price, ticket->type, customer, std::move( *change ) };
+	return PurchaseSuccess{ .ticket_id   = ticket->id,
+	                        .paid        = paid,
+	                        .price       = ticket->price,
+	                        .ticket_type = ticket->type,
+	                        .customer    = customer,
+	                        .change      = std::move( *change ) };
 }
 
 void TicketServer::cleanupExpiredReservations() {

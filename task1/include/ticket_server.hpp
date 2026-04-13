@@ -9,7 +9,6 @@
 #include <variant>
 #include <vector>
 
-
 namespace task1 {
 
 class TicketServer {
@@ -39,7 +38,6 @@ private:
 
 	void removeReservation( ReservationId reservation_id );
 
-private:
 	mutable std::mutex mutex_;
 
 	std::vector< Ticket > tickets_;

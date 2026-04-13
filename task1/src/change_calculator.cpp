@@ -18,7 +18,7 @@ struct DpState {
 std::optional< ChangeResult > ChangeCalculator::computeMinimalCoinChange( Money amount,
                                                                           const CoinInventory& inventory ) {
 	if ( amount < 0 ) return std::nullopt;
-	if ( amount == 0 ) return ChangeResult{ 0, {} };
+	if ( amount == 0 ) return ChangeResult{ .total = 0, .coins = {} };
 
 	std::vector< DpState > dp( amount + 1 );
 	dp[ 0 ].reachable  = true;

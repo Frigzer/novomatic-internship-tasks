@@ -8,9 +8,10 @@ namespace {
 using Clock = std::chrono::system_clock;
 
 std::vector< Ticket > makeSampleTickets() {
-	return { Ticket{ static_cast< Money >( 1 ), 350, "normal", TicketStatus::Available, std::nullopt },
-	         Ticket{ static_cast< TicketId >( 2 ), 350, "normal", TicketStatus::Available, std::nullopt },
-	         Ticket{ static_cast< TicketId >( 3 ), 170, "reduced", TicketStatus::Available, std::nullopt } };
+	return {
+	    Ticket{ .id = 1, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt },
+	    Ticket{ .id = 2, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt },
+	    Ticket{ .id = 3, .price = 170, .type = "reduced", .status = TicketStatus::Available, .owner = std::nullopt } };
 }
 
 }  // namespace
@@ -66,9 +67,9 @@ TEST( TicketServerTests, CancelReservationReturnsTicketToPool ) {
 
 TEST( TicketServerTests, TimeoutReleasesReservation ) {
 	auto now = Clock::now();
-	TicketServer server( { Ticket{ 1, 350, "normal", TicketStatus::Available, std::nullopt } },
-	                     CoinInventory( { { 200, 1 }, { 100, 5 }, { 50, 2 } } ), std::chrono::seconds( 60 ),
-	                     [ &now ] { return now; } );
+	TicketServer server(
+	    { Ticket{ .id = 1, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt } },
+	    CoinInventory( { { 200, 1 }, { 100, 5 }, { 50, 2 } } ), std::chrono::seconds( 60 ), [ &now ] { return now; } );
 
 	auto reservation = server.reserveTicket( "normal" );
 	ASSERT_TRUE( reservation.has_value() );
@@ -84,15 +85,15 @@ TEST( TicketServerTests, TimeoutReleasesReservation ) {
 
 TEST( TicketServerTests, SuccessfulPurchaseAssignsTicketAndReturnsChange ) {
 	auto now = Clock::now();
-	TicketServer server( { Ticket{ 1, 350, "normal", TicketStatus::Available, std::nullopt } },
-	                     CoinInventory( { { 200, 1 }, { 100, 5 }, { 50, 2 } } ), std::chrono::seconds( 60 ),
-	                     [ &now ] { return now; } );
+	TicketServer server(
+	    { Ticket{ .id = 1, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt } },
+	    CoinInventory( { { 200, 1 }, { 100, 5 }, { 50, 2 } } ), std::chrono::seconds( 60 ), [ &now ] { return now; } );
 
 	auto reservation = server.reserveTicket( "normal" );
 	ASSERT_TRUE( reservation.has_value() );
 
 	CoinInventory inserted( { { 500, 1 } } );
-	CustomerData customer{ "Jan", "Kowalski" };
+	CustomerData customer{ .first_name = "Jan", .last_name = "Kowalski" };
 
 	auto result = server.finalizePurchase( reservation->reservation_id, customer, inserted );
 
@@ -111,15 +112,15 @@ TEST( TicketServerTests, SuccessfulPurchaseAssignsTicketAndReturnsChange ) {
 
 TEST( TicketServerTests, InsufficientFundsReturnsInsertedCoinsAndReleasesReservation ) {
 	auto now = Clock::now();
-	TicketServer server( { Ticket{ 1, 350, "normal", TicketStatus::Available, std::nullopt } },
-	                     CoinInventory( { { 200, 1 }, { 100, 5 }, { 50, 2 } } ), std::chrono::seconds( 60 ),
-	                     [ &now ] { return now; } );
+	TicketServer server(
+	    { Ticket{ .id = 1, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt } },
+	    CoinInventory( { { 200, 1 }, { 100, 5 }, { 50, 2 } } ), std::chrono::seconds( 60 ), [ &now ] { return now; } );
 
 	auto reservation = server.reserveTicket( "normal" );
 	ASSERT_TRUE( reservation.has_value() );
 
 	CoinInventory inserted( { { 200, 1 }, { 100, 1 } } );
-	CustomerData customer{ "Jan", "Kowalski" };
+	CustomerData customer{ .first_name = "Jan", .last_name = "Kowalski" };
 
 	auto result = server.finalizePurchase( reservation->reservation_id, customer, inserted );
 
@@ -137,14 +138,16 @@ TEST( TicketServerTests, InsufficientFundsReturnsInsertedCoinsAndReleasesReserva
 
 TEST( TicketServerTests, CannotMakeChangeReturnsInsertedCoinsAndReleasesReservation ) {
 	auto now = Clock::now();
-	TicketServer server( { Ticket{ 1, 280, "special", TicketStatus::Available, std::nullopt } },
-	                     CoinInventory( { { 200, 10 } } ), std::chrono::seconds( 60 ), [ &now ] { return now; } );
+	TicketServer server(
+	    { Ticket{
+	        .id = 1, .price = 280, .type = "special", .status = TicketStatus::Available, .owner = std::nullopt } },
+	    CoinInventory( { { 200, 10 } } ), std::chrono::seconds( 60 ), [ &now ] { return now; } );
 
 	auto reservation = server.reserveTicket( "special" );
 	ASSERT_TRUE( reservation.has_value() );
 
 	CoinInventory inserted( { { 500, 1 } } );
-	CustomerData customer{ "Jan", "Kowalski" };
+	CustomerData customer{ .first_name = "Jan", .last_name = "Kowalski" };
 
 	auto result = server.finalizePurchase( reservation->reservation_id, customer, inserted );
 

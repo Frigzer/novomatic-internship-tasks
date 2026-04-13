@@ -14,9 +14,10 @@ void printMoney( task1::Money amount ) {
 int main() {
 	using namespace task1;
 
-	std::vector< Ticket > tickets = { { 1, 350, "normal", TicketStatus::Available, std::nullopt },
-	                                  { 2, 350, "normal", TicketStatus::Available, std::nullopt },
-	                                  { 3, 170, "reduced", TicketStatus::Available, std::nullopt } };
+	std::vector< Ticket > tickets = {
+	    { .id = 1, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt },
+	    { .id = 2, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt },
+	    { .id = 3, .price = 170, .type = "reduced", .status = TicketStatus::Available, .owner = std::nullopt } };
 
 	// Początkowy stan kasetki: 1x2zl, 5x1zl, 2x50gr
 	CoinInventory cashbox( { { 200, 1 }, { 100, 5 }, { 50, 2 } } );
@@ -42,7 +43,7 @@ int main() {
 	std::cout << "\nReserved ticket: " << reservation->ticket_type << " (ID: " << reservation->ticket_id << ")\n";
 
 	// Symulacja zakupu
-	CustomerData customer{ "Jan", "Kowalski" };
+	CustomerData customer{ .first_name="Jan", .last_name="Kowalski" };
 
 	// Klient wrzuca 5 zł (500 groszy)
 	CoinInventory inserted( { { 500, 1 } } );
