@@ -4,6 +4,7 @@ Checks: >
   google-*,
   -google-build-namespaces*,
   -google-readability-braces-around-statements,
+  -google-readability-todo,
   -llvm-namespace-comment,
   cppcoreguidelines-*,
   -cppcoreguidelines-special-member-functions,
@@ -11,7 +12,7 @@ Checks: >
   -cppcoreguidelines-avoid-const-or-ref-data-members,
   -cppcoreguidelines-pro-type-union-access,
   -cppcoreguidelines-pro-type-vararg,
-  -google-readability-todo,
+  -cppcoreguidelines-avoid-magic-numbers,
   portability-*,
   concurrency-*
   bugprone-*,
@@ -19,10 +20,13 @@ Checks: >
   -bugprone-easily-swappable-parameters,
   performance-*,
   modernize-*,
+  -modernize-use-trailing-return-type,
   readability-*,
   -readability-identifier-length,
   -readability-uppercase-literal-suffix,
   -readability-braces-around-statements,
+  -readability-magic-numbers,
+  -modernize-use-nodiscard,
   misc-*,
   -misc-non-private-member-variables-in-classes
 
