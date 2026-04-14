@@ -1,4 +1,5 @@
 add_library(task2_lib
+    src/graph_renderer.cpp
     src/graph.cpp
     src/json_io.cpp
     src/layout_engine.cpp
@@ -12,7 +13,17 @@ target_include_directories(task2_lib
 target_compile_features(task2_lib PUBLIC cxx_std_23)
 
 find_package(nlohmann_json CONFIG REQUIRED)
-target_link_libraries(task2_lib PUBLIC nlohmann_json::nlohmann_json)
+find_package(SFML CONFIG REQUIRED COMPONENTS Graphics Window System)
+find_package(imgui-sfml CONFIG REQUIRED)
+
+target_link_libraries(task2_lib 
+    PUBLIC 
+        nlohmann_json::nlohmann_json
+        SFML::Graphics
+        SFML::Window
+        SFML::System
+        ImGui-SFML::ImGui-SFML
+)
 
 add_executable(task2
     app/main.cpp
