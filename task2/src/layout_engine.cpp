@@ -1,6 +1,7 @@
 #include "layout_engine.hpp"
 
 #include <algorithm>
+#include <map>
 #include <queue>
 
 namespace task2 {
@@ -66,6 +67,31 @@ std::unordered_map< int, int > computeLayersInternal( const Graph& graph,
 
 	return layer;
 }
+
+float computeBarycenter( const task2::Node& node, const task2::Graph& graph,
+                         const std::unordered_map< int, std::vector< int > >& incoming ) {
+	const auto it = incoming.find( node.id );
+	if ( it == incoming.end() || it->second.empty() ) {
+		return static_cast< float >( node.id );
+	}
+
+	float sum = 0.0f;
+	int count = 0;
+
+	for ( int parentId : it->second ) {
+		const Node* parent = graph.findNode( parentId );
+		if ( parent != nullptr ) {
+			sum += parent->y;
+			++count;
+		}
+	}
+
+	if ( count == 0 ) {
+		return static_cast< float >( node.id );
+	}
+
+	return sum / static_cast< float >( count );
+}
 }  // namespace
 
 LayoutEngine::LayoutEngine() : config_() {}
@@ -78,10 +104,12 @@ void LayoutEngine::applyLayout( Graph& graph ) const {
 
 	std::unordered_map< int, std::vector< int > > outgoing;
 	std::unordered_map< int, std::vector< int > > incoming;
+
 	for ( const auto& [ id, node ] : nodes ) {
 		outgoing[ id ] = {};
 		incoming[ id ] = {};
 	}
+
 	for ( const auto& edge : graph.getEdges() ) {
 		outgoing[ edge.from ].push_back( edge.to );
 		incoming[ edge.to ].push_back( edge.from );
@@ -93,7 +121,8 @@ void LayoutEngine::applyLayout( Graph& graph ) const {
 }
 
 void LayoutEngine::arrangeNodesInLayers( Graph& graph, const LayerMap& layer, const AdjList& incoming ) const {
-	std::unordered_map< int, std::vector< Node* > > layers;
+	std::map< int, std::vector< Node* > > layers;
+
 	for ( const auto& [ id, _ ] : graph.getNodes() ) {
 		if ( Node* ptr = graph.findNode( id ) ) {
 			layers[ layer.at( id ) ].push_back( ptr );
@@ -101,17 +130,25 @@ void LayoutEngine::arrangeNodesInLayers( Graph& graph, const LayerMap& layer, co
 	}
 
 	for ( auto& [ layer_idx, nodes_in_layer ] : layers ) {
-		std::ranges::sort( nodes_in_layer, [ &incoming ]( const Node* a, const Node* b ) {
-			if ( incoming.at( a->id ).size() != incoming.at( b->id ).size() ) {
-				return incoming.at( a->id ).size() < incoming.at( b->id ).size();
+		std::ranges::sort( nodes_in_layer, [ this, &graph, &incoming ]( const Node* a, const Node* b ) {
+			const float baryA = computeBarycenter( *a, graph, incoming );
+			const float baryB = computeBarycenter( *b, graph, incoming );
+
+			if ( baryA != baryB ) {
+				return baryA < baryB;
 			}
+
 			return a->id < b->id;
 		} );
 
 		const float current_x = config_.margin_x + ( static_cast< float >( layer_idx ) * config_.layer_spacing );
-		for ( size_t i = 0; i < nodes_in_layer.size(); ++i ) {
-			nodes_in_layer[ i ]->x = current_x;
-			nodes_in_layer[ i ]->y = config_.margin_y + ( static_cast< float >( i ) * config_.node_spacing );
+
+		float current_y = config_.margin_y;
+		for ( Node* node : nodes_in_layer ) {
+			node->x = current_x;
+			node->y = current_y;
+
+			current_y += node->height + config_.node_spacing;
 		}
 	}
 }
