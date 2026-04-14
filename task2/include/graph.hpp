@@ -24,7 +24,7 @@ struct Edge {
 class Graph {
 public:
 	bool addNode( Node node );
-	void addEdge( Edge edge );
+	bool addEdge( Edge edge );
 	void clear();
 
 	Node* findNode( int id );

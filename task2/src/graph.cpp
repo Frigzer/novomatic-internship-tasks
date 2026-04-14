@@ -7,10 +7,12 @@ bool Graph::addNode( Node node ) {
 	return result.second;
 }
 
-void Graph::addEdge( Edge edge ) {
-	if ( hasNode( edge.from ) && hasNode( edge.to ) ) {
-		edges_.push_back( edge );
+bool Graph::addEdge( Edge edge ) {
+	if ( !hasNode( edge.from ) || !hasNode( edge.to ) ) {
+		return false;
 	}
+	edges_.push_back( edge );
+	return true;
 }
 
 void Graph::clear() {
