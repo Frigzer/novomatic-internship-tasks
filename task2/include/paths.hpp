@@ -4,12 +4,7 @@
 
 namespace task2::paths {
 
-inline std::filesystem::path sourceDir() {
-	return std::filesystem::path( TASK2_SOURCE_DIR );
-}
-
-inline std::filesystem::path dataDir() {
-	return sourceDir() / "data";
-}
+inline const std::filesystem::path sourceDir = std::filesystem::path( TASK2_SOURCE_DIR );
+inline const std::filesystem::path dataDir   = sourceDir / "data";
 
 }  // namespace task2::paths
