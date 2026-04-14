@@ -37,7 +37,9 @@ Graph JsonGraphIO::loadFromFile( const std::string& path ) {
 		node.width  = nodeJson.value( "width", 180.0f );
 		node.height = nodeJson.value( "height", 80.0f );
 
-		graph.nodes.push_back( std::move( node ) );
+		if ( !graph.addNode( std::move( node ) ) ) {
+			throw std::runtime_error( "Duplicate node ID found in JSON: " + std::to_string( node.id ) );
+		}
 	}
 
 	for ( const auto& edgeJson : j[ "edges" ] ) {
@@ -45,7 +47,7 @@ Graph JsonGraphIO::loadFromFile( const std::string& path ) {
 		edge.from = edgeJson.at( "from" ).get< int >();
 		edge.to   = edgeJson.at( "to" ).get< int >();
 
-		graph.edges.push_back( edge );
+		graph.addEdge( edge );
 	}
 
 	validateGraph( graph );
@@ -59,7 +61,7 @@ void JsonGraphIO::saveToFile( const Graph& graph, const std::string& path ) {
 	j[ "nodes" ] = json::array();
 	j[ "edges" ] = json::array();
 
-	for ( const auto& node : graph.nodes ) {
+	for ( const auto& [ id, node ] : graph.getNodes() ) {
 		j[ "nodes" ].push_back( { { "id", node.id },
 		                          { "name", node.name },
 		                          { "x", node.x },
@@ -68,7 +70,7 @@ void JsonGraphIO::saveToFile( const Graph& graph, const std::string& path ) {
 		                          { "height", node.height } } );
 	}
 
-	for ( const auto& edge : graph.edges ) {
+	for ( const auto& edge : graph.getEdges() ) {
 		j[ "edges" ].push_back( { { "from", edge.from }, { "to", edge.to } } );
 	}
 
@@ -81,22 +83,16 @@ void JsonGraphIO::saveToFile( const Graph& graph, const std::string& path ) {
 }
 
 void JsonGraphIO::validateGraph( const Graph& graph ) {
-	if ( !graph.hasUniqueNodeIds() ) {
-		throw std::runtime_error( "Graph contains duplicate node ids" );
-	}
-
-	for ( const auto& node : graph.nodes ) {
+	for ( const auto& [ id, node ] : graph.getNodes() ) {
 		if ( node.name.empty() ) {
-			throw std::runtime_error( "Graph contains a node with an empty name" );
+			throw std::runtime_error( "Graph contains a node with an empty name. ID: " + std::to_string( id ) );
 		}
 	}
 
-	for ( const auto& edge : graph.edges ) {
-		if ( !graph.hasNode( edge.from ) ) {
-			throw std::runtime_error( "Edge references missing source node id: " + std::to_string( edge.from ) );
-		}
-		if ( !graph.hasNode( edge.to ) ) {
-			throw std::runtime_error( "Edge references missing target node id: " + std::to_string( edge.to ) );
+	for ( const auto& edge : graph.getEdges() ) {
+		if ( !graph.hasNode( edge.from ) || !graph.hasNode( edge.to ) ) {
+			throw std::runtime_error( "Graph contains an orphan edge: " + std::to_string( edge.from ) + " -> " +
+			                          std::to_string( edge.to ) );
 		}
 	}
 }

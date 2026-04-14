@@ -1,39 +1,35 @@
 #include "graph.hpp"
 
-#include <unordered_set>
-
 namespace task2 {
 
-Node* Graph::findNode( int id ) {
-	for ( auto& node : nodes ) {
-		if ( node.id == id ) {
-			return &node;
-		}
+bool Graph::addNode( Node node ) {
+	auto result = nodes_.insert( { node.id, std::move( node ) } );
+	return result.second;
+}
+
+void Graph::addEdge( Edge edge ) {
+	if ( hasNode( edge.from ) && hasNode( edge.to ) ) {
+		edges_.push_back( edge );
 	}
-	return nullptr;
+}
+
+void Graph::clear() {
+	nodes_.clear();
+	edges_.clear();
+}
+
+Node* Graph::findNode( int id ) {
+	auto it = nodes_.find( id );
+	return ( it != nodes_.end() ) ? &it->second : nullptr;
 }
 
 const Node* Graph::findNode( int id ) const {
-	for ( const auto& node : nodes ) {
-		if ( node.id == id ) {
-			return &node;
-		}
-	}
-	return nullptr;
+	auto it = nodes_.find( id );
+	return ( it != nodes_.end() ) ? &it->second : nullptr;
 }
 
 bool Graph::hasNode( int id ) const {
-	return findNode( id ) != nullptr;
-}
-
-bool Graph::hasUniqueNodeIds() const {
-	std::unordered_set< int > ids;
-	for ( const auto& node : nodes ) {
-		if ( !ids.insert( node.id ).second ) {
-			return false;
-		}
-	}
-	return true;
+	return nodes_.contains( id );
 }
 
 }  // namespace task2

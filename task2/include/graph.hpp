@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
+
 
 namespace task2 {
 
@@ -21,14 +23,22 @@ struct Edge {
 
 class Graph {
 public:
-	std::vector< Node > nodes;
-	std::vector< Edge > edges;
+	bool addNode( Node node );
+	void addEdge( Edge edge );
+	void clear();
 
 	Node* findNode( int id );
 	const Node* findNode( int id ) const;
 
 	bool hasNode( int id ) const;
-	bool hasUniqueNodeIds() const;
+
+	const std::unordered_map< int, Node >& getNodes() const { return nodes_; }
+
+	const std::vector< Edge >& getEdges() const { return edges_; }
+
+private:
+	std::unordered_map< int, Node > nodes_;
+	std::vector< Edge > edges_;
 };
 
 }  // namespace task2

@@ -2,106 +2,116 @@
 
 #include <algorithm>
 #include <queue>
-#include <unordered_map>
-#include <vector>
 
 namespace task2 {
+
+namespace {
+void resolveCycles( const Graph& graph, std::unordered_map< int, int >& layer ) {
+	const auto& nodes = graph.getNodes();
+	const auto& edges = graph.getEdges();
+
+	for ( int i = 0; i < static_cast< int >( nodes.size() ); ++i ) {
+		bool changed = false;
+		for ( const auto& edge : edges ) {
+			if ( layer[ edge.to ] < layer[ edge.from ] + 1 ) {
+				layer[ edge.to ] = layer[ edge.from ] + 1;
+				changed          = true;
+			}
+		}
+		if ( !changed ) break;
+	}
+}
+
+std::unordered_map< int, int > computeLayersInternal( const Graph& graph,
+                                                      const std::unordered_map< int, std::vector< int > >& outgoing ) {
+	std::unordered_map< int, int > layer;
+	std::unordered_map< int, int > indegree;
+	const auto& nodes = graph.getNodes();
+
+	for ( const auto& [ id, _ ] : nodes ) {
+		layer[ id ]    = 0;
+		indegree[ id ] = 0;
+	}
+
+	for ( const auto& edge : graph.getEdges() ) {
+		indegree[ edge.to ]++;
+	}
+
+	std::queue< int > q;
+	for ( const auto& [ id, _ ] : nodes ) {
+		if ( indegree[ id ] == 0 ) q.push( id );
+	}
+
+	if ( q.empty() ) {
+		for ( const auto& [ id, _ ] : nodes ) q.push( id );
+	}
+
+	size_t visited = 0;
+	while ( !q.empty() ) {
+		int curr = q.front();
+		q.pop();
+		visited++;
+
+		if ( outgoing.contains( curr ) ) {
+			for ( int next : outgoing.at( curr ) ) {
+				layer[ next ] = std::max( layer[ next ], layer[ curr ] + 1 );
+				if ( --indegree[ next ] == 0 ) q.push( next );
+			}
+		}
+	}
+
+	if ( visited < nodes.size() ) {
+		resolveCycles( graph, layer );
+	}
+
+	return layer;
+}
+}  // namespace
 
 LayoutEngine::LayoutEngine() : config_() {}
 
 LayoutEngine::LayoutEngine( const Config& config ) : config_( config ) {}
 
 void LayoutEngine::applyLayout( Graph& graph ) const {
-	if ( graph.nodes.empty() ) {
-		return;
-	}
+	const auto& nodes = graph.getNodes();
+	if ( nodes.empty() ) return;
 
 	std::unordered_map< int, std::vector< int > > outgoing;
 	std::unordered_map< int, std::vector< int > > incoming;
-	std::unordered_map< int, int > indegree;
-	std::unordered_map< int, int > layer;
-
-	for ( const auto& node : graph.nodes ) {
-		outgoing[ node.id ] = {};
-		incoming[ node.id ] = {};
-		indegree[ node.id ] = 0;
-		layer[ node.id ]    = 0;
+	for ( const auto& [ id, node ] : nodes ) {
+		outgoing[ id ] = {};
+		incoming[ id ] = {};
 	}
-
-	for ( const auto& edge : graph.edges ) {
+	for ( const auto& edge : graph.getEdges() ) {
 		outgoing[ edge.from ].push_back( edge.to );
 		incoming[ edge.to ].push_back( edge.from );
-		indegree[ edge.to ]++;
 	}
 
-	std::queue< int > q;
-	for ( const auto& node : graph.nodes ) {
-		if ( indegree[ node.id ] == 0 ) {
-			q.push( node.id );
-		}
-	}
+	auto layerMap = computeLayersInternal( graph, outgoing );
 
-	if ( q.empty() ) {
-		for ( const auto& node : graph.nodes ) {
-			q.push( node.id );
-		}
-	}
+	arrangeNodesInLayers( graph, layerMap, incoming );
+}
 
-	int visited_count = 0;
-
-	while ( !q.empty() ) {
-		const int current = q.front();
-		q.pop();
-		visited_count++;
-
-		for ( const int next : outgoing[ current ] ) {
-			layer[ next ] = std::max( layer[ next ], layer[ current ] + 1 );
-			indegree[ next ]--;
-
-			if ( indegree[ next ] == 0 ) {
-				q.push( next );
-			}
-		}
-	}
-
-	if ( visited_count < static_cast< int >( graph.nodes.size() ) ) {
-		for ( const auto& node : graph.nodes ) {
-			if ( !layer.contains( node.id ) ) {
-				layer[ node.id ] = 0;
-			}
-		}
-
-		bool changed = true;
-		for ( int iteration = 0; iteration < static_cast< int >( graph.nodes.size() ) && changed; ++iteration ) {
-			changed = false;
-			for ( const auto& edge : graph.edges ) {
-				if ( layer[ edge.to ] < layer[ edge.from ] + 1 ) {
-					layer[ edge.to ] = layer[ edge.from ] + 1;
-					changed          = true;
-				}
-			}
-		}
-	}
-
+void LayoutEngine::arrangeNodesInLayers( Graph& graph, const LayerMap& layer, const AdjList& incoming ) const {
 	std::unordered_map< int, std::vector< Node* > > layers;
-	for ( auto& node : graph.nodes ) {
-		layers[ layer[ node.id ] ].push_back( &node );
+	for ( const auto& [ id, _ ] : graph.getNodes() ) {
+		if ( Node* ptr = graph.findNode( id ) ) {
+			layers[ layer.at( id ) ].push_back( ptr );
+		}
 	}
 
-	for ( auto& [ layer_index, nodes_in_layer ] : layers ) {
-		std::ranges::sort( nodes_in_layer, [ &incoming ]( const Node* lhs, const Node* rhs ) {
-			const auto lhs_in = incoming[ lhs->id ].size();
-			const auto rhs_in = incoming[ rhs->id ].size();
-			if ( lhs_in != rhs_in ) {
-				return lhs_in < rhs_in;
+	for ( auto& [ layer_idx, nodes_in_layer ] : layers ) {
+		std::ranges::sort( nodes_in_layer, [ &incoming ]( const Node* a, const Node* b ) {
+			if ( incoming.at( a->id ).size() != incoming.at( b->id ).size() ) {
+				return incoming.at( a->id ).size() < incoming.at( b->id ).size();
 			}
-			return lhs->id < rhs->id;
+			return a->id < b->id;
 		} );
 
-		for ( std::size_t i = 0; i < nodes_in_layer.size(); ++i ) {
-			Node* node = nodes_in_layer[ i ];
-			node->x    = config_.margin_x + ( static_cast< float >( layer_index ) * config_.layer_spacing );
-			node->y    = config_.margin_y + ( static_cast< float >( i ) * config_.node_spacing );
+		const float current_x = config_.margin_x + ( static_cast< float >( layer_idx ) * config_.layer_spacing );
+		for ( size_t i = 0; i < nodes_in_layer.size(); ++i ) {
+			nodes_in_layer[ i ]->x = current_x;
+			nodes_in_layer[ i ]->y = config_.margin_y + ( static_cast< float >( i ) * config_.node_spacing );
 		}
 	}
 }

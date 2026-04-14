@@ -13,7 +13,8 @@ int main() {
 		task2::LayoutEngine engine;
 		engine.applyLayout( graph );
 
-		task2::JsonGraphIO::saveToFile( graph, "task2/data/sample_graph_out.json" );
+		const auto outputPath = task2::paths::dataDir() / "sample_graph_out.json";
+		task2::JsonGraphIO::saveToFile( graph, outputPath.string() );
 
 		std::cout << "Layout applied successfully.\n";
 		std::cout << "Output saved to: task2/data/sample_graph_out.json\n";
