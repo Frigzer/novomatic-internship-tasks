@@ -6,7 +6,7 @@
 namespace task2 {
 
 TEST( JsonGraphIOTests, LoadsValidGraphFromFile ) {
-	const auto inputPath = task2::paths::dataDir / "sample_graph.json";
+	const auto inputPath = task2::paths::inputDir / "sample_graph.json";
 	auto graph           = task2::JsonGraphIO::loadFromFile( inputPath.string() );
 
 	EXPECT_EQ( graph.getNodes().size(), 4U );

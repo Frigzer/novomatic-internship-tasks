@@ -17,9 +17,9 @@ namespace task2 {
 BlueprintViewerApp::BlueprintViewerApp()
     : window_( sf::VideoMode( { 1600, 900 } ), "Task 2 - Blueprint Auto Layout" ),
       graphView_( window_.getDefaultView() ),
-      inputPath_( paths::dataDir / "sample_graph.json" ),
-      outputPath_( paths::dataDir / "sample_graph_out.json" ),
-      fontPath_( paths::dataDir / "arial.ttf" ) {
+      inputPath_( paths::inputDir / "sample_graph.json" ),
+      outputPath_( paths::outputDir / "sample_graph_out.json" ),
+      fontPath_( paths::dataDir / "font/arial.ttf" ) {
 	window_.setFramerateLimit( 60 );
 
 	if ( !ImGui::SFML::Init( window_ ) ) {
