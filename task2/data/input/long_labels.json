@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    { "id": 1, "name": "Event On Player Character Initialization", "x": 0, "y": 0, "width": 320, "height": 90 },
+    { "id": 2, "name": "Check If Player Has Previously Saved Progress", "x": 0, "y": 0, "width": 360, "height": 90 },
+    { "id": 3, "name": "Load Previously Saved Inventory And Equipment", "x": 0, "y": 0, "width": 360, "height": 90 },
+    { "id": 4, "name": "Create Default Starter Equipment For New Character", "x": 0, "y": 0, "width": 380, "height": 90 }
+  ],
+  "edges": [
+    { "from": 1, "to": 2 },
+    { "from": 2, "to": 3 },
+    { "from": 2, "to": 4 }
+  ]
+}

@@ -11,6 +11,7 @@
 #include <array>
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace task2 {
 
@@ -36,6 +37,8 @@ private:
 	void resetView();
 	void fitGraphInView();
 
+	void refreshInputFiles();
+
 	sf::RenderWindow window_;
 	sf::View graphView_;
 	sf::Font font_;
@@ -52,8 +55,10 @@ private:
 	std::filesystem::path outputPath_;
 	std::filesystem::path fontPath_;
 
-	std::array< char, 512 > inputPathBuffer_{};
-	std::array< char, 512 > outputPathBuffer_{};
+	std::vector< std::filesystem::path > inputFiles_;
+	int selectedInputIndex_{ -1 };
+
+	std::array< char, 256 > outputFileNameBuffer_{};
 
 	std::string statusMessage_{ "Ready" };
 };

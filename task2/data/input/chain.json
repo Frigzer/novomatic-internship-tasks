@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    { "id": 1, "name": "Begin", "x": 0, "y": 0 },
+    { "id": 2, "name": "Load Player", "x": 0, "y": 0 },
+    { "id": 3, "name": "Spawn HUD", "x": 0, "y": 0 },
+    { "id": 4, "name": "Finish Init", "x": 0, "y": 0 }
+  ],
+  "edges": [
+    { "from": 1, "to": 2 },
+    { "from": 2, "to": 3 },
+    { "from": 3, "to": 4 }
+  ]
+}

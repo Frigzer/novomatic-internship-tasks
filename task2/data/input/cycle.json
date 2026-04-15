@@ -1,0 +1,14 @@
+{
+  "nodes": [
+    { "id": 1, "name": "Start", "x": 0, "y": 0 },
+    { "id": 2, "name": "Update", "x": 0, "y": 0 },
+    { "id": 3, "name": "Check", "x": 0, "y": 0 },
+    { "id": 4, "name": "Loop Back", "x": 0, "y": 0 }
+  ],
+  "edges": [
+    { "from": 1, "to": 2 },
+    { "from": 2, "to": 3 },
+    { "from": 3, "to": 4 },
+    { "from": 4, "to": 2 }
+  ]
+}

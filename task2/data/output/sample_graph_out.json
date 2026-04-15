@@ -1,0 +1,50 @@
+{
+    "edges": [
+        {
+            "from": 1,
+            "to": 2
+        },
+        {
+            "from": 2,
+            "to": 3
+        },
+        {
+            "from": 2,
+            "to": 4
+        }
+    ],
+    "nodes": [
+        {
+            "height": 80.0,
+            "id": 1,
+            "name": "Event BeginPlay",
+            "width": 180.0,
+            "x": 100.0,
+            "y": 100.0
+        },
+        {
+            "height": 80.0,
+            "id": 2,
+            "name": "Branch",
+            "width": 180.0,
+            "x": 350.0,
+            "y": 100.0
+        },
+        {
+            "height": 80.0,
+            "id": 3,
+            "name": "Play Sound (True)",
+            "width": 180.0,
+            "x": 600.0,
+            "y": 100.0
+        },
+        {
+            "height": 80.0,
+            "id": 4,
+            "name": "Spawn Actor (False)",
+            "width": 180.0,
+            "x": 600.0,
+            "y": 320.0
+        }
+    ]
+}

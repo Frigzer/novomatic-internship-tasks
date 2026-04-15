@@ -1,0 +1,20 @@
+{
+  "nodes": [
+    { "id": 1, "name": "Begin A", "x": 0, "y": 0 },
+    { "id": 2, "name": "Action A1", "x": 0, "y": 0 },
+    { "id": 3, "name": "Action A2", "x": 0, "y": 0 },
+
+    { "id": 10, "name": "Begin B", "x": 0, "y": 0 },
+    { "id": 11, "name": "Branch B", "x": 0, "y": 0 },
+    { "id": 12, "name": "Result B1", "x": 0, "y": 0 },
+    { "id": 13, "name": "Result B2", "x": 0, "y": 0 }
+  ],
+  "edges": [
+    { "from": 1, "to": 2 },
+    { "from": 2, "to": 3 },
+
+    { "from": 10, "to": 11 },
+    { "from": 11, "to": 12 },
+    { "from": 11, "to": 13 }
+  ]
+}

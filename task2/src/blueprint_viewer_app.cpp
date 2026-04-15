@@ -30,15 +30,56 @@ BlueprintViewerApp::BlueprintViewerApp()
 		throw std::runtime_error( "Failed to load font: " + fontPath_.string() );
 	}
 
-	std::snprintf( inputPathBuffer_.data(), inputPathBuffer_.size(), "%s", inputPath_.string().c_str() );
-	std::snprintf( outputPathBuffer_.data(), outputPathBuffer_.size(), "%s", outputPath_.string().c_str() );
+	std::filesystem::create_directories( paths::inputDir );
+	std::filesystem::create_directories( paths::outputDir );
 
+	std::snprintf( outputFileNameBuffer_.data(), outputFileNameBuffer_.size(), "%s",
+	               outputPath_.filename().string().c_str() );
+
+	refreshInputFiles();
+
+	if ( !inputFiles_.empty() ) {
+		auto it = std::ranges::find( inputFiles_, inputPath_ );
+		if ( it != inputFiles_.end() ) {
+			selectedInputIndex_ = static_cast< int >( std::distance( inputFiles_.begin(), it ) );
+		} else {
+			selectedInputIndex_ = 0;
+			inputPath_          = inputFiles_.front();
+		}
+	}
 	loadGraph();
 	resetView();
 }
 
 BlueprintViewerApp::~BlueprintViewerApp() {
 	ImGui::SFML::Shutdown();
+}
+
+void BlueprintViewerApp::refreshInputFiles() {
+	inputFiles_.clear();
+
+	if ( !std::filesystem::exists( paths::inputDir ) ) {
+		return;
+	}
+
+	for ( const auto& entry : std::filesystem::directory_iterator( paths::inputDir ) ) {
+		if ( !entry.is_regular_file() ) {
+			continue;
+		}
+
+		if ( entry.path().extension() == ".json" ) {
+			inputFiles_.push_back( entry.path() );
+		}
+	}
+
+	std::ranges::sort( inputFiles_,
+	                   []( const auto& a, const auto& b ) { return a.filename().string() < b.filename().string(); } );
+
+	if ( inputFiles_.empty() ) {
+		selectedInputIndex_ = -1;
+	} else if ( selectedInputIndex_ >= static_cast< int >( inputFiles_.size() ) ) {
+		selectedInputIndex_ = 0;
+	}
 }
 
 int BlueprintViewerApp::run() {
@@ -130,8 +171,35 @@ void BlueprintViewerApp::render() {
 void BlueprintViewerApp::drawGui() {
 	ImGui::Begin( "Controls" );
 
-	ImGui::InputText( "Input JSON", inputPathBuffer_.data(), inputPathBuffer_.size() );
-	ImGui::InputText( "Output JSON", outputPathBuffer_.data(), outputPathBuffer_.size() );
+	if ( ImGui::Button( "Refresh input files" ) ) {
+		refreshInputFiles();
+	}
+
+	if ( !inputFiles_.empty() && selectedInputIndex_ >= 0 &&
+	     selectedInputIndex_ < static_cast< int >( inputFiles_.size() ) ) {
+		const std::string currentLabel = inputFiles_[ selectedInputIndex_ ].filename().string();
+
+		if ( ImGui::BeginCombo( "Input graph", currentLabel.c_str() ) ) {
+			for ( int i = 0; i < static_cast< int >( inputFiles_.size() ); ++i ) {
+				const bool isSelected   = ( i == selectedInputIndex_ );
+				const std::string label = inputFiles_[ i ].filename().string();
+
+				if ( ImGui::Selectable( label.c_str(), isSelected ) ) {
+					selectedInputIndex_ = i;
+					inputPath_          = inputFiles_[ i ];
+				}
+
+				if ( isSelected ) {
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+	} else {
+		ImGui::TextDisabled( "No input JSON files found in data/input" );
+	}
+
+	ImGui::InputText( "Output file name", outputFileNameBuffer_.data(), outputFileNameBuffer_.size() );
 
 	ImGui::Separator();
 
@@ -169,6 +237,8 @@ void BlueprintViewerApp::drawGui() {
 
 	ImGui::Separator();
 
+	ImGui::TextWrapped( "Input directory: %s", paths::inputDir.string().c_str() );
+	ImGui::TextWrapped( "Output directory: %s", paths::outputDir.string().c_str() );
 	ImGui::TextWrapped( "Status: %s", statusMessage_.c_str() );
 	ImGui::Text( "Nodes: %zu", graph_.getNodes().size() );
 	ImGui::Text( "Edges: %zu", graph_.getEdges().size() );
@@ -178,9 +248,14 @@ void BlueprintViewerApp::drawGui() {
 
 void BlueprintViewerApp::loadGraph() {
 	try {
-		inputPath_     = inputPathBuffer_.data();
+		if ( selectedInputIndex_ < 0 || selectedInputIndex_ >= static_cast< int >( inputFiles_.size() ) ) {
+			statusMessage_ = "Load failed: no input file selected";
+			return;
+		}
+
+		inputPath_     = inputFiles_[ selectedInputIndex_ ];
 		graph_         = JsonGraphIO::loadFromFile( inputPath_ );
-		statusMessage_ = "Loaded graph successfully";
+		statusMessage_ = "Loaded graph successfully: " + inputPath_.filename().string();
 		fitGraphInView();
 	} catch ( const std::exception& ex ) {
 		statusMessage_ = std::string( "Load failed: " ) + ex.what();
@@ -189,9 +264,16 @@ void BlueprintViewerApp::loadGraph() {
 
 void BlueprintViewerApp::saveGraph() {
 	try {
-		outputPath_ = outputPathBuffer_.data();
+		const std::string outputFileName = outputFileNameBuffer_.data();
+
+		if ( outputFileName.empty() ) {
+			statusMessage_ = "Save failed: output file name is empty";
+			return;
+		}
+
+		outputPath_ = paths::outputDir / outputFileName;
 		JsonGraphIO::saveToFile( graph_, outputPath_ );
-		statusMessage_ = "Saved graph successfully";
+		statusMessage_ = "Saved graph successfully: " + outputPath_.filename().string();
 	} catch ( const std::exception& ex ) {
 		statusMessage_ = std::string( "Save failed: " ) + ex.what();
 	}
