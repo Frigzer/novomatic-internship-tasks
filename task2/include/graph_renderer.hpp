@@ -9,6 +9,16 @@ namespace task2 {
 
 class GraphRenderer {
 public:
+	struct VisualConfig {
+		static constexpr float MinorGridStep = 50.0f;
+		static constexpr float MajorGridStep = 200.0f;
+		static constexpr float GridTolerance = 0.001f;
+
+		static inline const sf::Color ColorMajorGrid{ 50, 54, 62 };
+		static inline const sf::Color ColorMinorGrid{ 36, 40, 46 };
+		static inline const sf::Color ColorBackground{ 24, 28, 33 };
+	};
+
 	void draw( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const;
 
 private:

@@ -1,6 +1,7 @@
 #include "layout_engine.hpp"
 
 #include <algorithm>
+#include <functional>
 #include <map>
 #include <queue>
 #include <unordered_set>
@@ -8,7 +9,13 @@
 namespace task2 {
 
 namespace {
-void resolveCycles( const Graph& graph, const LayoutEngine::Component& component, std::unordered_map< int, int >& layer ) {
+struct FilteredAdjacency {
+	LayoutEngine::AdjList outgoing;
+	LayoutEngine::AdjList incoming;
+};
+
+void resolveCycles( const Graph& graph, const LayoutEngine::Component& component,
+                    std::unordered_map< int, int >& layer ) {
 	const auto& edges = graph.getEdges();
 
 	for ( int i = 0; i < static_cast< int >( component.size() ); ++i ) {
@@ -33,18 +40,12 @@ void resolveCycles( const Graph& graph, const LayoutEngine::Component& component
 
 std::unordered_map< int, int > computeLayersInternal( const Graph& graph, const LayoutEngine::Component& component,
                                                       const std::unordered_map< int, std::vector< int > >& outgoing ) {
-	std::unordered_map< int, int > layer;
+	LayoutEngine::LayerMap layer;
 	std::unordered_map< int, int > indegree;
-	std::unordered_set< int > componentSet( component.begin(), component.end() );
 
-	for ( int id : component ) {
-		layer[ id ]    = 0;
-		indegree[ id ] = 0;
-	}
-
-	for ( const auto& edge : graph.getEdges() ) {
-		if ( componentSet.contains( edge.from ) && componentSet.contains( edge.to ) ) {
-			indegree[ edge.to ]++;
+	for ( const auto& [ from, nextNodes ] : outgoing ) {
+		for ( int to : nextNodes ) {
+			indegree[ to ]++;
 		}
 	}
 
@@ -154,6 +155,69 @@ std::vector< LayoutEngine::Component > computeComponents( const Graph& graph ) {
 
 	return components;
 }
+
+FilteredAdjacency buildAcyclicAdjacency( const Graph& graph, const std::vector< int >& component ) {
+	std::unordered_set< int > componentSet( component.begin(), component.end() );
+
+	FilteredAdjacency adjacency;
+	for ( int id : component ) {
+		adjacency.outgoing[ id ] = {};
+		adjacency.incoming[ id ] = {};
+	}
+
+	enum class VisitState { Unvisited, Visiting, Visited };
+
+	std::unordered_map< int, VisitState > state;
+	for ( int id : component ) {
+		state[ id ] = VisitState::Unvisited;
+	}
+
+	std::unordered_map< int, std::vector< int > > rawOutgoing;
+	for ( int id : component ) {
+		rawOutgoing[ id ] = {};
+	}
+
+	for ( const auto& edge : graph.getEdges() ) {
+		if ( componentSet.contains( edge.from ) && componentSet.contains( edge.to ) ) {
+			rawOutgoing[ edge.from ].push_back( edge.to );
+		}
+	}
+
+	for ( auto& [ _, list ] : rawOutgoing ) {
+		std::ranges::sort( list );
+	}
+
+	std::function< void( int ) > dfs = [ & ]( int current ) {
+		state[ current ] = VisitState::Visiting;
+
+		for ( int next : rawOutgoing[ current ] ) {
+			if ( state[ next ] == VisitState::Unvisited ) {
+				adjacency.outgoing[ current ].push_back( next );
+				adjacency.incoming[ next ].push_back( current );
+				dfs( next );
+			} else if ( state[ next ] == VisitState::Visited ) {
+				adjacency.outgoing[ current ].push_back( next );
+				adjacency.incoming[ next ].push_back( current );
+			} else {
+				// state[next] == Visiting
+				// To jest back edge - pomijamy go przy layeringu.
+			}
+		}
+
+		state[ current ] = VisitState::Visited;
+	};
+
+	std::vector< int > sortedComponent = component;
+	std::ranges::sort( sortedComponent );
+
+	for ( int id : sortedComponent ) {
+		if ( state[ id ] == VisitState::Unvisited ) {
+			dfs( id );
+		}
+	}
+
+	return adjacency;
+}
 }  // namespace
 
 LayoutEngine::LayoutEngine() : config_() {}
@@ -185,24 +249,10 @@ void LayoutEngine::applyLayout( Graph& graph ) const {
 }
 
 void LayoutEngine::applyLayoutToComponent( Graph& graph, const Component& component, float y_offset ) const {
-	std::unordered_set< int > componentSet( component.begin(), component.end() );
-	AdjList outgoing;
-	AdjList incoming;
+	const auto adjacency = buildAcyclicAdjacency( graph, component );
 
-	for ( int id : component ) {
-		outgoing[ id ] = {};
-		incoming[ id ] = {};
-	}
-
-	for ( const auto& edge : graph.getEdges() ) {
-		if ( componentSet.contains( edge.from ) && componentSet.contains( edge.to ) ) {
-			outgoing[ edge.from ].push_back( edge.to );
-			incoming[ edge.to ].push_back( edge.from );
-		}
-	}
-
-	auto layerMap = computeLayersInternal( graph, component, outgoing );
-	arrangeNodesInLayers( graph, layerMap, incoming, y_offset );
+	auto layerMap = computeLayersInternal( graph, component, adjacency.outgoing );
+	arrangeNodesInLayers( graph, layerMap, adjacency.incoming, y_offset );
 }
 
 void LayoutEngine::arrangeNodesInLayers( Graph& graph, const LayerMap& layer, const AdjList& incoming,

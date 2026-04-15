@@ -51,7 +51,7 @@ private:
 	LayoutEngine::Config layoutConfig_;
 
 	bool isPanning_{ false };
-	sf::Vector2i lastMousePixel_{};
+	sf::Vector2i lastMousePixel_;
 
 	std::filesystem::path inputPath_;
 	std::filesystem::path outputPath_;

@@ -10,7 +10,7 @@ namespace task2 {
 namespace {
 
 sf::Vector2f normalize( sf::Vector2f v ) {
-	const float length = std::sqrt( v.x * v.x + v.y * v.y );
+	const float length = std::sqrt( ( v.x * v.x ) + ( v.y * v.y ) );
 	if ( length == 0.0f ) {
 		return { 0.0f, 0.0f };
 	}
@@ -30,13 +30,12 @@ void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
 	const sf::Vector2f center = view.getCenter();
 	const sf::Vector2f size   = view.getSize();
 
-	const float left   = center.x - size.x * 0.5f;
-	const float right  = center.x + size.x * 0.5f;
-	const float top    = center.y - size.y * 0.5f;
-	const float bottom = center.y + size.y * 0.5f;
+	const float left   = center.x - ( size.x * 0.5f );
+	const float right  = center.x + ( size.x * 0.5f );
+	const float top    = center.y - ( size.y * 0.5f );
+	const float bottom = center.y + ( size.y * 0.5f );
 
-	constexpr float minorStep = 50.0f;
-	constexpr float majorStep = 200.0f;
+	using VC = VisualConfig;
 
 	sf::VertexArray lines( sf::PrimitiveType::Lines );
 
@@ -45,20 +44,20 @@ void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
 		lines.append( sf::Vertex( b, color ) );
 	};
 
-	const float firstVertical = std::floor( left / minorStep ) * minorStep;
-	for ( float x = firstVertical; x <= right; x += minorStep ) {
-		const bool major = std::fmod( std::abs( x ), majorStep ) < 0.001f ||
-		                   std::fmod( std::abs( x ), majorStep ) > ( majorStep - 0.001f );
+	const float firstVertical = std::floor( left / VC::MinorGridStep ) * VC::MinorGridStep;
+	for ( float x = firstVertical; x <= right; x += VC::MinorGridStep ) {
+		const bool major = std::fmod( std::abs( x ), VC::MajorGridStep ) < VC::GridTolerance ||
+		                   std::fmod( std::abs( x ), VC::MajorGridStep ) > ( VC::MajorGridStep - VC::GridTolerance );
 
-		appendLine( { x, top }, { x, bottom }, major ? sf::Color( 50, 54, 62 ) : sf::Color( 36, 40, 46 ) );
+		appendLine( { x, top }, { x, bottom }, major ? VC::ColorMajorGrid : VC::ColorMinorGrid );
 	}
 
-	const float firstHorizontal = std::floor( top / minorStep ) * minorStep;
-	for ( float y = firstHorizontal; y <= bottom; y += minorStep ) {
-		const bool major = std::fmod( std::abs( y ), majorStep ) < 0.001f ||
-		                   std::fmod( std::abs( y ), majorStep ) > ( majorStep - 0.001f );
+	const float firstHorizontal = std::floor( top / VC::MinorGridStep ) * VC::MinorGridStep;
+	for ( float y = firstHorizontal; y <= bottom; y += VC::MinorGridStep ) {
+		const bool major = std::fmod( std::abs( y ), VC::MajorGridStep ) < VC::GridTolerance ||
+		                   std::fmod( std::abs( y ), VC::MajorGridStep ) > ( VC::MajorGridStep - VC::GridTolerance );
 
-		appendLine( { left, y }, { right, y }, major ? sf::Color( 50, 54, 62 ) : sf::Color( 36, 40, 46 ) );
+		appendLine( { left, y }, { right, y }, major ? VC::ColorMajorGrid : VC::ColorMinorGrid );
 	}
 
 	target.draw( lines );
@@ -142,22 +141,46 @@ void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, 
 	const sf::Vector2f start{ from.x + from.width, from.y + from.height * 0.5f };
 	const sf::Vector2f end{ to.x, to.y + to.height * 0.5f };
 
-	const float horizontalOffset = std::max( 40.0f, ( end.x - start.x ) * 0.5f );
-	const float bendX            = start.x + horizontalOffset;
+	const bool isBackwardEdge = end.x <= start.x;
 
-	sf::VertexArray path( sf::PrimitiveType::LineStrip, 4 );
+	if ( !isBackwardEdge ) {
+		const float horizontalOffset = std::max( 40.0f, ( end.x - start.x ) * 0.5f );
+		const float bendX            = start.x + horizontalOffset;
+
+		sf::VertexArray path( sf::PrimitiveType::LineStrip, 4 );
+		path[ 0 ].position = start;
+		path[ 1 ].position = { bendX, start.y };
+		path[ 2 ].position = { bendX, end.y };
+		path[ 3 ].position = end;
+
+		for ( std::size_t i = 0; i < path.getVertexCount(); ++i ) {
+			path[ i ].color = sf::Color( 210, 210, 210 );
+		}
+
+		target.draw( path );
+		drawArrowHead( target, end, { 1.0f, 0.0f } );
+		return;
+	}
+
+	// Back edge: prowadź połączenie nad nodami.
+	const float detourY = std::min( start.y, end.y ) - 80.0f;
+	const float exitX   = start.x + 40.0f;
+	const float entryX  = end.x - 40.0f;
+
+	sf::VertexArray path( sf::PrimitiveType::LineStrip, 6 );
 	path[ 0 ].position = start;
-	path[ 1 ].position = { bendX, start.y };
-	path[ 2 ].position = { bendX, end.y };
-	path[ 3 ].position = end;
+	path[ 1 ].position = { exitX, start.y };
+	path[ 2 ].position = { exitX, detourY };
+	path[ 3 ].position = { entryX, detourY };
+	path[ 4 ].position = { entryX, end.y };
+	path[ 5 ].position = end;
 
 	for ( std::size_t i = 0; i < path.getVertexCount(); ++i ) {
 		path[ i ].color = sf::Color( 210, 210, 210 );
 	}
 
 	target.draw( path );
-
-	drawArrowHead( target, end, { 1.0f, 0.0f } );
+	drawArrowHead( target, end, { -1.0f, 0.0f } );
 }
 
 void GraphRenderer::drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) const {
