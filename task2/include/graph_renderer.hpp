@@ -3,6 +3,7 @@
 #include "graph.hpp"
 
 #include <SFML/Graphics.hpp>
+#include <string>
 
 namespace task2 {
 
@@ -18,6 +19,9 @@ private:
 	void drawSingleNode( sf::RenderTarget& target, const Node& node, const sf::Font& font ) const;
 	void drawSingleEdge( sf::RenderTarget& target, const Node& from, const Node& to ) const;
 	void drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) const;
+
+	std::string fitTextToWidth( const std::string& text, const sf::Font& font, unsigned int characterSize,
+	                            float maxWidth ) const;
 };
 
 }  // namespace task2

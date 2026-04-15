@@ -121,9 +121,15 @@ void GraphRenderer::drawSingleNode( sf::RenderTarget& target, const Node& node, 
 	header.setFillColor( sf::Color( 58, 66, 78 ) );
 	target.draw( header );
 
-	sf::Text title( font, node.name, 16 );
+	constexpr float horizontalPadding = 10.0f;
+	constexpr unsigned int titleSize  = 16;
+
+	const float maxTitleWidth     = std::max( 0.0f, node.width - 2.0f * horizontalPadding );
+	const std::string fittedTitle = fitTextToWidth( node.name, font, titleSize, maxTitleWidth );
+
+	sf::Text title( font, fittedTitle, titleSize );
 	title.setFillColor( sf::Color::White );
-	title.setPosition( { node.x + 10.0f, node.y + 6.0f } );
+	title.setPosition( { node.x + horizontalPadding, node.y + 6.0f } );
 	target.draw( title );
 
 	sf::Text idText( font, "#" + std::to_string( node.id ), 12 );
@@ -169,6 +175,39 @@ void GraphRenderer::drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, s
 	arrow.setFillColor( sf::Color( 220, 220, 220 ) );
 
 	target.draw( arrow );
+}
+
+std::string GraphRenderer::fitTextToWidth( const std::string& text, const sf::Font& font, unsigned int characterSize,
+                                           float maxWidth ) const {
+	if ( text.empty() ) {
+		return text;
+	}
+
+	sf::Text measure( font, text, characterSize );
+	if ( measure.getLocalBounds().size.x <= maxWidth ) {
+		return text;
+	}
+
+	const std::string ellipsis = "...";
+	sf::Text ellipsisMeasure( font, ellipsis, characterSize );
+	const float ellipsisWidth = ellipsisMeasure.getLocalBounds().size.x;
+
+	if ( ellipsisWidth > maxWidth ) {
+		return "";
+	}
+
+	std::string result = text;
+
+	while ( !result.empty() ) {
+		result.pop_back();
+
+		sf::Text candidate( font, result + ellipsis, characterSize );
+		if ( candidate.getLocalBounds().size.x <= maxWidth ) {
+			return result + ellipsis;
+		}
+	}
+
+	return "";
 }
 
 }  // namespace task2

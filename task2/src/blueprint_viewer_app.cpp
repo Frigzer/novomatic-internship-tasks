@@ -82,6 +82,23 @@ void BlueprintViewerApp::refreshInputFiles() {
 	}
 }
 
+const Node* BlueprintViewerApp::findHoveredNode() const {
+	const sf::Vector2i mousePixel = sf::Mouse::getPosition( window_ );
+	const sf::Vector2f mouseWorld = window_.mapPixelToCoords( mousePixel, graphView_ );
+
+	for ( const auto& [ _, node ] : graph_.getNodes() ) {
+		const sf::FloatRect bounds(
+		    { node.x, node.y },
+		    { node.width, node.height } );
+
+		if ( bounds.contains( mouseWorld ) ) {
+			return &node;
+		}
+	}
+
+	return nullptr;
+}
+
 int BlueprintViewerApp::run() {
 	while ( window_.isOpen() ) {
 		processEvents();
@@ -242,6 +259,15 @@ void BlueprintViewerApp::drawGui() {
 	ImGui::TextWrapped( "Status: %s", statusMessage_.c_str() );
 	ImGui::Text( "Nodes: %zu", graph_.getNodes().size() );
 	ImGui::Text( "Edges: %zu", graph_.getEdges().size() );
+
+	if ( !ImGui::GetIO().WantCaptureMouse ) {
+		if ( const Node* hoveredNode = findHoveredNode(); hoveredNode != nullptr ) {
+			ImGui::BeginTooltip();
+			ImGui::Text( "%s", hoveredNode->name.c_str() );
+			ImGui::TextDisabled( "Node ID: %d", hoveredNode->id );
+			ImGui::EndTooltip();
+		}
+	}
 
 	ImGui::End();
 }

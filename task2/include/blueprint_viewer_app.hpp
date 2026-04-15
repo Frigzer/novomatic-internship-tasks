@@ -39,6 +39,8 @@ private:
 
 	void refreshInputFiles();
 
+	const Node* findHoveredNode() const;
+
 	sf::RenderWindow window_;
 	sf::View graphView_;
 	sf::Font font_;
