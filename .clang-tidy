@@ -12,7 +12,6 @@ Checks: >
   -cppcoreguidelines-avoid-const-or-ref-data-members,
   -cppcoreguidelines-pro-type-union-access,
   -cppcoreguidelines-pro-type-vararg,
-  -cppcoreguidelines-avoid-magic-numbers,
   portability-*,
   concurrency-*
   bugprone-*,
@@ -25,7 +24,6 @@ Checks: >
   -readability-identifier-length,
   -readability-uppercase-literal-suffix,
   -readability-braces-around-statements,
-  -readability-magic-numbers,
   -modernize-use-nodiscard,
   misc-*,
   -misc-non-private-member-variables-in-classes
