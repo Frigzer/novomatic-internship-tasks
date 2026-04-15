@@ -1,4 +1,5 @@
 add_library(task2_lib
+    src/blueprint_viewer_app.cpp
     src/graph_renderer.cpp
     src/graph.cpp
     src/json_io.cpp
@@ -25,6 +26,11 @@ target_link_libraries(task2_lib
         ImGui-SFML::ImGui-SFML
 )
 
+target_compile_definitions(task2_lib
+    PUBLIC
+        TASK2_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 add_executable(task2
     app/main.cpp
 )
@@ -42,14 +48,6 @@ target_link_libraries(task2_tests
     PRIVATE
         task2_lib
         GTest::gtest_main
-)
-
-target_compile_definitions(task2 PRIVATE
-    TASK2_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
-)
-
-target_compile_definitions(task2_tests PRIVATE
-    TASK2_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 include(GoogleTest)

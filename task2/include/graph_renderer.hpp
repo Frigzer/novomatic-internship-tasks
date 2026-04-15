@@ -11,10 +11,13 @@ public:
 	void draw( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const;
 
 private:
+	void drawGrid( sf::RenderTarget& target ) const;
 	void drawEdges( sf::RenderTarget& target, const Graph& graph ) const;
 	void drawNodes( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const;
+
 	void drawSingleNode( sf::RenderTarget& target, const Node& node, const sf::Font& font ) const;
 	void drawSingleEdge( sf::RenderTarget& target, const Node& from, const Node& to ) const;
+	void drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) const;
 };
 
 }  // namespace task2
