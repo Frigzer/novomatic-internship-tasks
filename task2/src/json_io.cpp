@@ -34,8 +34,8 @@ Graph JsonGraphIO::loadFromFile( const std::filesystem::path& path ) {
 		node.name   = nodeJson.at( "name" ).get< std::string >();
 		node.x      = nodeJson.value( "x", 0.0f );
 		node.y      = nodeJson.value( "y", 0.0f );
-		node.width  = nodeJson.value( "width", 180.0f );
-		node.height = nodeJson.value( "height", 80.0f );
+		node.width  = nodeJson.value( "width", Node::DefaultWidth );
+		node.height = nodeJson.value( "height", Node::DefaultHeight );
 
 		if ( node.name.empty() ) {
 			throw std::runtime_error( "Node has an empty name. ID: " + std::to_string( node.id ) );

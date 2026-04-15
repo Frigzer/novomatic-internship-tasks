@@ -8,12 +8,15 @@
 namespace task2 {
 
 struct Node {
+	static constexpr float DefaultWidth = 180.0f;
+	static constexpr float DefaultHeight = 80.0f;
+	
 	int id{};
 	std::string name;
 	float x{ 0.0f };
 	float y{ 0.0f };
-	float width{ 180.0f };
-	float height{ 80.0f };
+	float width{ DefaultWidth };
+	float height{ DefaultHeight };
 };
 
 struct Edge {

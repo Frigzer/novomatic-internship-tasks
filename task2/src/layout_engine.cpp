@@ -8,7 +8,7 @@
 namespace task2 {
 
 namespace {
-void resolveCycles( const Graph& graph, const std::vector< int >& component, std::unordered_map< int, int >& layer ) {
+void resolveCycles( const Graph& graph, const LayoutEngine::Component& component, std::unordered_map< int, int >& layer ) {
 	const auto& edges = graph.getEdges();
 
 	for ( int i = 0; i < static_cast< int >( component.size() ); ++i ) {
@@ -31,7 +31,7 @@ void resolveCycles( const Graph& graph, const std::vector< int >& component, std
 	}
 }
 
-std::unordered_map< int, int > computeLayersInternal( const Graph& graph, const std::vector< int >& component,
+std::unordered_map< int, int > computeLayersInternal( const Graph& graph, const LayoutEngine::Component& component,
                                                       const std::unordered_map< int, std::vector< int > >& outgoing ) {
 	std::unordered_map< int, int > layer;
 	std::unordered_map< int, int > indegree;
@@ -109,13 +109,8 @@ float computeBarycenter( const task2::Node& node, const task2::Graph& graph,
 
 	return sum / static_cast< float >( count );
 }
-}  // namespace
 
-LayoutEngine::LayoutEngine() : config_() {}
-
-LayoutEngine::LayoutEngine( const Config& config ) : config_( config ) {}
-
-std::vector< LayoutEngine::Component > LayoutEngine::computeComponents( const Graph& graph ) const {
+std::vector< LayoutEngine::Component > computeComponents( const Graph& graph ) {
 	std::unordered_map< int, std::vector< int > > undirected;
 
 	for ( const auto& [ id, _ ] : graph.getNodes() ) {
@@ -128,14 +123,14 @@ std::vector< LayoutEngine::Component > LayoutEngine::computeComponents( const Gr
 	}
 
 	std::unordered_set< int > visited;
-	std::vector< Component > components;
+	std::vector< LayoutEngine::Component > components;
 
 	for ( const auto& [ startId, _ ] : graph.getNodes() ) {
 		if ( visited.contains( startId ) ) {
 			continue;
 		}
 
-		Component component;
+		LayoutEngine::Component component;
 		std::queue< int > q;
 		q.push( startId );
 		visited.insert( startId );
@@ -159,27 +154,11 @@ std::vector< LayoutEngine::Component > LayoutEngine::computeComponents( const Gr
 
 	return components;
 }
+}  // namespace
 
-void LayoutEngine::applyLayoutToComponent( Graph& graph, const Component& component, float y_offset ) const {
-	std::unordered_set< int > componentSet( component.begin(), component.end() );
-	AdjList outgoing;
-	AdjList incoming;
+LayoutEngine::LayoutEngine() : config_() {}
 
-	for ( int id : component ) {
-		outgoing[ id ] = {};
-		incoming[ id ] = {};
-	}
-
-	for ( const auto& edge : graph.getEdges() ) {
-		if ( componentSet.contains( edge.from ) && componentSet.contains( edge.to ) ) {
-			outgoing[ edge.from ].push_back( edge.to );
-			incoming[ edge.to ].push_back( edge.from );
-		}
-	}
-
-	auto layerMap = computeLayersInternal( graph, component, outgoing );
-	arrangeNodesInLayers( graph, layerMap, incoming, y_offset );
-}
+LayoutEngine::LayoutEngine( const Config& config ) : config_( config ) {}
 
 void LayoutEngine::applyLayout( Graph& graph ) const {
 	if ( graph.getNodes().empty() ) {
@@ -203,6 +182,27 @@ void LayoutEngine::applyLayout( Graph& graph ) const {
 
 		currentYOffset = maxY + config_.component_spacing;
 	}
+}
+
+void LayoutEngine::applyLayoutToComponent( Graph& graph, const Component& component, float y_offset ) const {
+	std::unordered_set< int > componentSet( component.begin(), component.end() );
+	AdjList outgoing;
+	AdjList incoming;
+
+	for ( int id : component ) {
+		outgoing[ id ] = {};
+		incoming[ id ] = {};
+	}
+
+	for ( const auto& edge : graph.getEdges() ) {
+		if ( componentSet.contains( edge.from ) && componentSet.contains( edge.to ) ) {
+			outgoing[ edge.from ].push_back( edge.to );
+			incoming[ edge.to ].push_back( edge.from );
+		}
+	}
+
+	auto layerMap = computeLayersInternal( graph, component, outgoing );
+	arrangeNodesInLayers( graph, layerMap, incoming, y_offset );
 }
 
 void LayoutEngine::arrangeNodesInLayers( Graph& graph, const LayerMap& layer, const AdjList& incoming,
