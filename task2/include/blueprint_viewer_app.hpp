@@ -23,8 +23,34 @@ public:
 	int run();
 
 private:
+	struct GuiLimits {
+		static constexpr float MarginMin = 0.0f;
+		static constexpr float MarginMax = 500.0f;
+
+		static constexpr float LayerSpacingMin = 50.0f;
+		static constexpr float LayerSpacingMax = 600.0f;
+
+		static constexpr float NodeSpacingMin = 20.0f;
+		static constexpr float NodeSpacingMax = 300.0f;
+
+		static constexpr float ComponentSpacingMin = 50.0f;
+		static constexpr float ComponentSpacingMax = 500.0f;
+
+		static constexpr float DefaultWidth  = 400.0f;
+		static constexpr float DefaultHeight = 550.0f;
+	};
+
+	static constexpr std::size_t FileNameBufferSize = 256;
+
 	void processEvents();
 	void handleEvent( const sf::Event& event );
+
+	void handleSystemEvent( const sf::Event& event );
+    void handleKeyboardEvent( const sf::Event::KeyPressed& event );
+    void handleMouseWheelEvent( const sf::Event::MouseWheelScrolled& event );
+    void handleMouseButtonEvent( const sf::Event& event );
+    void handleMouseMoveEvent( const sf::Event::MouseMoved& event );
+
 	void update( sf::Time deltaTime );
 	void render();
 
@@ -60,7 +86,7 @@ private:
 	std::vector< std::filesystem::path > inputFiles_;
 	int selectedInputIndex_{ -1 };
 
-	std::array< char, 256 > outputFileNameBuffer_{};
+	std::array< char, FileNameBufferSize > outputFileNameBuffer_{};
 
 	std::string statusMessage_{ "Ready" };
 };

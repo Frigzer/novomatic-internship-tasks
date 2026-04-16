@@ -1,10 +1,11 @@
 #include "graph_renderer.hpp"
 
+#include "visual_config.hpp"
+
 #include <SFML/Graphics.hpp>
 
 #include <algorithm>
 #include <cmath>
-#include <vector>
 
 namespace task2 {
 namespace {
@@ -68,7 +69,7 @@ void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
 	const float top    = center.y - ( size.y * 0.5f );
 	const float bottom = center.y + ( size.y * 0.5f );
 
-	using VC = VisualConfig;
+	namespace VC = config;
 
 	sf::VertexArray lines( sf::PrimitiveType::Lines );
 
@@ -97,7 +98,7 @@ void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
 }
 
 void GraphRenderer::drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) const {
-	using VC = VisualConfig;
+	namespace VC = config;
 
 	direction = normalize( direction );
 	const sf::Vector2f perp{ -direction.y, direction.x };
@@ -152,7 +153,7 @@ void GraphRenderer::drawNodes( sf::RenderTarget& target, const Graph& graph, con
 }
 
 void GraphRenderer::drawSingleNode( sf::RenderTarget& target, const Node& node, const sf::Font& font ) const {
-	using VC = VisualConfig;
+	namespace VC = config;
 
 	sf::RectangleShape shadow;
 	shadow.setPosition( { node.x + VC::NodeShadowOffset, node.y + VC::NodeShadowOffset } );
@@ -192,7 +193,7 @@ void GraphRenderer::drawSingleNode( sf::RenderTarget& target, const Node& node, 
 }
 
 void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, const Node& to ) const {
-	using VC = VisualConfig;
+	namespace VC = config;
 
 	const sf::Vector2f start{ from.x + from.width, from.y + ( from.height * 0.5f ) };
 	const sf::Vector2f end{ to.x, to.y + ( to.height * 0.5f ) };
@@ -218,18 +219,17 @@ void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, 
 		return;
 	}
 
-	// Back edge: prowadź połączenie nad nodami.
-	const float detourY = std::min( start.y, end.y ) - 80.0f;
-	const float exitX   = start.x + 40.0f;
-	const float entryX  = end.x - 40.0f;
+	const float detourY = std::min( start.y, end.y ) - VC::EdgeDetourYOffset;
+	const float exitX   = start.x + VC::EdgeBackExitOffset;
+	const float entryX  = end.x - VC::EdgeBackExitOffset;
 
-	sf::VertexArray path( sf::PrimitiveType::LineStrip, VC::EdgeDetourYOffset );
+	sf::VertexArray path( sf::PrimitiveType::LineStrip, VC::PathPointsBackward );
 	path[ 0 ].position = start;
 	path[ 1 ].position = { exitX, start.y };
 	path[ 2 ].position = { exitX, detourY };
 	path[ 3 ].position = { entryX, detourY };
 	path[ 4 ].position = { entryX, end.y };
-	path[ 5 ].position = end; // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+	path[ 5 ].position = end;  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 
 	for ( std::size_t i = 0; i < path.getVertexCount(); ++i ) {
 		path[ i ].color = VC::ColorEdge;

@@ -1,6 +1,7 @@
 #include "layout_engine.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <queue>
@@ -165,7 +166,7 @@ FilteredAdjacency buildAcyclicAdjacency( const Graph& graph, const std::vector< 
 		adjacency.incoming[ id ] = {};
 	}
 
-	enum class VisitState { Unvisited, Visiting, Visited };
+	enum class VisitState : std::uint8_t { Unvisited, Visiting, Visited };
 
 	std::unordered_map< int, VisitState > state;
 	for ( int id : component ) {

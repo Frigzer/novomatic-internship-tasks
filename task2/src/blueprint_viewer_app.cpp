@@ -2,6 +2,7 @@
 
 #include "json_io.hpp"
 #include "paths.hpp"
+#include "visual_config.hpp"
 
 #include <imgui-SFML.h>
 #include <imgui.h>
@@ -14,13 +15,27 @@
 
 namespace task2 {
 
+namespace {
+
+// Window configuration
+constexpr unsigned int DefaultWindowWidth  = 1600;
+constexpr unsigned int DefaultWindowHeight = 900;
+constexpr unsigned int FrameRateLimit      = 60;
+const std::string WindowTitle              = "Task 2 - Blueprint Auto Layout";
+
+// Default filenames
+const std::string DefaultInputFile  = "sample_graph.json";
+const std::string DefaultOutputFile = "sample_graph_out.json";
+const std::string MainFontFile      = "font/arial.ttf";
+}  // namespace
+
 BlueprintViewerApp::BlueprintViewerApp()
-    : window_( sf::VideoMode( { 1600, 900 } ), "Task 2 - Blueprint Auto Layout" ),
+    : window_( sf::VideoMode( { DefaultWindowWidth, DefaultWindowHeight } ), WindowTitle ),
       graphView_( window_.getDefaultView() ),
-      inputPath_( paths::inputDir / "sample_graph.json" ),
-      outputPath_( paths::outputDir / "sample_graph_out.json" ),
-      fontPath_( paths::dataDir / "font/arial.ttf" ) {
-	window_.setFramerateLimit( 60 );
+      inputPath_( paths::inputDir / DefaultInputFile ),
+      outputPath_( paths::outputDir / DefaultOutputFile ),
+      fontPath_( paths::dataDir / MainFontFile ) {
+	window_.setFramerateLimit( FrameRateLimit );
 
 	if ( !ImGui::SFML::Init( window_ ) ) {
 		throw std::runtime_error( "Failed to initialize ImGui-SFML" );
@@ -87,9 +102,7 @@ const Node* BlueprintViewerApp::findHoveredNode() const {
 	const sf::Vector2f mouseWorld = window_.mapPixelToCoords( mousePixel, graphView_ );
 
 	for ( const auto& [ _, node ] : graph_.getNodes() ) {
-		const sf::FloatRect bounds(
-		    { node.x, node.y },
-		    { node.width, node.height } );
+		const sf::FloatRect bounds( { node.x, node.y }, { node.width, node.height } );
 
 		if ( bounds.contains( mouseWorld ) ) {
 			return &node;
@@ -117,55 +130,84 @@ void BlueprintViewerApp::processEvents() {
 }
 
 void BlueprintViewerApp::handleEvent( const sf::Event& event ) {
-	if ( event.is< sf::Event::Closed >() ) {
-		window_.close();
-		return;
-	}
+    handleSystemEvent( event );
 
-	const ImGuiIO& io = ImGui::GetIO();
+    if ( const auto* keyPressed = event.getIf< sf::Event::KeyPressed >() ) {
+        handleKeyboardEvent( *keyPressed );
+    } 
+    else if ( const auto* mouseWheel = event.getIf< sf::Event::MouseWheelScrolled >() ) {
+        handleMouseWheelEvent( *mouseWheel );
+    } 
+    else if ( event.is< sf::Event::MouseButtonPressed >() || event.is< sf::Event::MouseButtonReleased >() ) {
+        handleMouseButtonEvent( event );
+    } 
+    else if ( const auto* mouseMoved = event.getIf< sf::Event::MouseMoved >() ) {
+        handleMouseMoveEvent( *mouseMoved );
+    }
+}
 
-	if ( const auto* resized = event.getIf< sf::Event::Resized >() ) {
-		graphView_.setSize( { static_cast< float >( resized->size.x ), static_cast< float >( resized->size.y ) } );
-	}
+void BlueprintViewerApp::handleSystemEvent( const sf::Event& event ) {
+    if ( event.is< sf::Event::Closed >() ) {
+        window_.close();
+    } else if ( const auto* resized = event.getIf< sf::Event::Resized >() ) {
+        graphView_.setSize( { static_cast< float >( resized->size.x ), static_cast< float >( resized->size.y ) } );
+    }
+}
 
-	if ( const auto* mouseWheel = event.getIf< sf::Event::MouseWheelScrolled >() ) {
-		if ( !io.WantCaptureMouse && mouseWheel->wheel == sf::Mouse::Wheel::Vertical ) {
-			const float zoomFactor = mouseWheel->delta > 0 ? 0.9f : 1.1f;
+void BlueprintViewerApp::handleKeyboardEvent( const sf::Event::KeyPressed& event ) {
+    if ( ImGui::GetIO().WantCaptureKeyboard ) return;
 
-			const sf::Vector2i mousePixel = sf::Mouse::getPosition( window_ );
-			const sf::Vector2f beforeZoom = window_.mapPixelToCoords( mousePixel, graphView_ );
+    const float keyboardZoomFactor = 1.1f;
 
-			graphView_.zoom( zoomFactor );
+    if ( event.code == sf::Keyboard::Key::Add || event.code == sf::Keyboard::Key::Equal ) {
+        graphView_.zoom( 1.0f / keyboardZoomFactor );
+    } else if ( event.code == sf::Keyboard::Key::Subtract || event.code == sf::Keyboard::Key::Hyphen ) {
+        graphView_.zoom( keyboardZoomFactor );
+    }
+}
 
-			const sf::Vector2f afterZoom = window_.mapPixelToCoords( mousePixel, graphView_ );
-			graphView_.move( beforeZoom - afterZoom );
-		}
-	}
+void BlueprintViewerApp::handleMouseWheelEvent( const sf::Event::MouseWheelScrolled& event ) {
+    if ( ImGui::GetIO().WantCaptureMouse || event.wheel != sf::Mouse::Wheel::Vertical ) return;
 
-	if ( const auto* mousePressed = event.getIf< sf::Event::MouseButtonPressed >() ) {
-		if ( !io.WantCaptureMouse && mousePressed->button == sf::Mouse::Button::Middle ) {
-			isPanning_      = true;
-			lastMousePixel_ = { mousePressed->position.x, mousePressed->position.y };
-		}
-	}
+    const float zoomFactor = event.delta > 0 ? 0.9f : 1.1f;
+    const sf::Vector2i mousePixel = sf::Mouse::getPosition( window_ );
+    const sf::Vector2f beforeZoom = window_.mapPixelToCoords( mousePixel, graphView_ );
 
-	if ( const auto* mouseReleased = event.getIf< sf::Event::MouseButtonReleased >() ) {
-		if ( mouseReleased->button == sf::Mouse::Button::Middle ) {
-			isPanning_ = false;
-		}
-	}
+    graphView_.zoom( zoomFactor );
 
-	if ( const auto* mouseMoved = event.getIf< sf::Event::MouseMoved >() ) {
-		if ( !io.WantCaptureMouse && isPanning_ ) {
-			const sf::Vector2i currentPixel{ mouseMoved->position.x, mouseMoved->position.y };
+    const sf::Vector2f afterZoom = window_.mapPixelToCoords( mousePixel, graphView_ );
+    graphView_.move( beforeZoom - afterZoom );
+}
 
-			const sf::Vector2f previousWorld = window_.mapPixelToCoords( lastMousePixel_, graphView_ );
-			const sf::Vector2f currentWorld  = window_.mapPixelToCoords( currentPixel, graphView_ );
+void BlueprintViewerApp::handleMouseButtonEvent( const sf::Event& event ) {
+    if ( ImGui::GetIO().WantCaptureMouse ) return;
 
-			graphView_.move( previousWorld - currentWorld );
-			lastMousePixel_ = currentPixel;
-		}
-	}
+    if ( const auto* pressed = event.getIf< sf::Event::MouseButtonPressed >() ) {
+        const bool isMiddle = ( pressed->button == sf::Mouse::Button::Middle );
+        const bool isCtrlLeft = ( pressed->button == sf::Mouse::Button::Left && 
+                                  sf::Keyboard::isKeyPressed( sf::Keyboard::Key::LControl ) );
+
+        if ( isMiddle || isCtrlLeft ) {
+            isPanning_ = true;
+            lastMousePixel_ = { pressed->position.x, pressed->position.y };
+        }
+    } 
+    else if ( const auto* released = event.getIf< sf::Event::MouseButtonReleased >() ) {
+        if ( released->button == sf::Mouse::Button::Middle || released->button == sf::Mouse::Button::Left ) {
+            isPanning_ = false;
+        }
+    }
+}
+
+void BlueprintViewerApp::handleMouseMoveEvent( const sf::Event::MouseMoved& event ) {
+    if ( !isPanning_ ) return;
+
+    const sf::Vector2i currentPixel{ event.position.x, event.position.y };
+    const sf::Vector2f previousWorld = window_.mapPixelToCoords( lastMousePixel_, graphView_ );
+    const sf::Vector2f currentWorld  = window_.mapPixelToCoords( currentPixel, graphView_ );
+
+    graphView_.move( previousWorld - currentWorld );
+    lastMousePixel_ = currentPixel;
 }
 
 void BlueprintViewerApp::update( sf::Time deltaTime ) {
@@ -174,7 +216,7 @@ void BlueprintViewerApp::update( sf::Time deltaTime ) {
 }
 
 void BlueprintViewerApp::render() {
-	window_.clear( sf::Color( 24, 26, 30 ) );
+	window_.clear( config::ColorBackground );
 
 	window_.setView( graphView_ );
 	renderer_.draw( window_, graph_, font_ );
@@ -186,6 +228,10 @@ void BlueprintViewerApp::render() {
 }
 
 void BlueprintViewerApp::drawGui() {
+	using GL = GuiLimits;
+
+	ImGui::SetNextWindowSize( { GL::DefaultWidth, GL::DefaultHeight }, ImGuiCond_FirstUseEver );
+
 	ImGui::Begin( "Controls" );
 
 	if ( ImGui::Button( "Refresh input files" ) ) {
@@ -220,11 +266,15 @@ void BlueprintViewerApp::drawGui() {
 
 	ImGui::Separator();
 
-	ImGui::SliderFloat( "Margin X", &layoutConfig_.margin_x, 0.0f, 500.0f );
-	ImGui::SliderFloat( "Margin Y", &layoutConfig_.margin_y, 0.0f, 500.0f );
-	ImGui::SliderFloat( "Layer spacing", &layoutConfig_.layer_spacing, 50.0f, 600.0f );
-	ImGui::SliderFloat( "Node spacing", &layoutConfig_.node_spacing, 20.0f, 300.0f );
-	ImGui::SliderFloat( "Component spacing", &layoutConfig_.component_spacing, 50.0f, 500.0f );
+	ImGui::SliderFloat( "Margin X", &layoutConfig_.margin_x, GL::MarginMin, GL::MarginMax );
+	ImGui::SliderFloat( "Margin Y", &layoutConfig_.margin_y, GL::MarginMin, GL::MarginMax );
+
+	ImGui::SliderFloat( "Layer spacing", &layoutConfig_.layer_spacing, GL::LayerSpacingMin, GL::LayerSpacingMax );
+
+	ImGui::SliderFloat( "Node spacing", &layoutConfig_.node_spacing, GL::NodeSpacingMin, GL::NodeSpacingMax );
+
+	ImGui::SliderFloat( "Component spacing", &layoutConfig_.component_spacing, GL::ComponentSpacingMin,
+	                    GL::ComponentSpacingMax );
 
 	if ( ImGui::Button( "Load JSON" ) ) {
 		loadGraph();
@@ -254,20 +304,35 @@ void BlueprintViewerApp::drawGui() {
 
 	ImGui::Separator();
 
-	ImGui::TextWrapped( "Input directory: %s", paths::inputDir.string().c_str() );
-	ImGui::TextWrapped( "Output directory: %s", paths::outputDir.string().c_str() );
-	ImGui::TextWrapped( "Status: %s", statusMessage_.c_str() );
 	ImGui::Text( "Nodes: %zu", graph_.getNodes().size() );
-	ImGui::Text( "Edges: %zu", graph_.getEdges().size() );
+    ImGui::Text( "Edges: %zu", graph_.getEdges().size() );
+    
+    ImGui::TextWrapped( "Status: %s", statusMessage_.c_str() );
 
-	if ( !ImGui::GetIO().WantCaptureMouse ) {
-		if ( const Node* hoveredNode = findHoveredNode(); hoveredNode != nullptr ) {
-			ImGui::BeginTooltip();
-			ImGui::Text( "%s", hoveredNode->name.c_str() );
-			ImGui::TextDisabled( "Node ID: %d", hoveredNode->id );
-			ImGui::EndTooltip();
-		}
-	}
+    ImGui::Separator();
+
+    auto getCleanPath = []( const std::filesystem::path& path ) {
+        return path.parent_path().filename().string() + "/" + path.filename().string();
+    };
+
+    ImGui::TextDisabled( "Input:  %s", getCleanPath( paths::inputDir ).c_str() );
+    ImGui::TextDisabled( "Output: %s", getCleanPath( paths::outputDir ).c_str() );
+
+    ImGui::Separator();
+
+    ImGui::Text( "Controls:" );
+    ImGui::BulletText( "Zoom:  Wheel or Keypad +/-" );
+    ImGui::BulletText( "Pan:   MMB or Ctrl + LPM" );
+    ImGui::BulletText( "Reset: 'Reset View' or 'Fit Graph'" );
+
+    if ( !ImGui::GetIO().WantCaptureMouse ) {
+        if ( const Node* hoveredNode = findHoveredNode(); hoveredNode != nullptr ) {
+            ImGui::BeginTooltip();
+            ImGui::Text( "%s", hoveredNode->name.c_str() );
+            ImGui::TextDisabled( "Node ID: %d", hoveredNode->id );
+            ImGui::EndTooltip();
+        }
+    }
 
 	ImGui::End();
 }
@@ -282,7 +347,7 @@ void BlueprintViewerApp::loadGraph() {
 		inputPath_     = inputFiles_[ selectedInputIndex_ ];
 		graph_         = JsonGraphIO::loadFromFile( inputPath_ );
 		statusMessage_ = "Loaded graph successfully: " + inputPath_.filename().string();
-		fitGraphInView();
+		// fitGraphInView();
 	} catch ( const std::exception& ex ) {
 		statusMessage_ = std::string( "Load failed: " ) + ex.what();
 	}
@@ -310,7 +375,7 @@ void BlueprintViewerApp::applyLayout() {
 		LayoutEngine engine( layoutConfig_ );
 		engine.applyLayout( graph_ );
 		statusMessage_ = "Layout applied successfully";
-		fitGraphInView();
+		// fitGraphInView();
 	} catch ( const std::exception& ex ) {
 		statusMessage_ = std::string( "Layout failed: " ) + ex.what();
 	}
@@ -347,7 +412,10 @@ void BlueprintViewerApp::fitGraphInView() {
 	const float graphWidth  = std::max( 1.0f, maxX - minX );
 	const float graphHeight = std::max( 1.0f, maxY - minY );
 
-	graphView_.setCenter( { minX + graphWidth * 0.5f, minY + graphHeight * 0.5f } );
+	graphView_.setCenter(
+	    { minX + ( graphWidth * 0.5f ),  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+	      minY +
+	          ( graphHeight * 0.5f ) } );  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 	graphView_.setSize( { graphWidth, graphHeight } );
 
 	const sf::Vector2u windowSize = window_.getSize();
