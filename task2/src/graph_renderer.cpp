@@ -17,15 +17,7 @@ sf::Vector2f normalize( sf::Vector2f v ) {
 	return { v.x / length, v.y / length };
 }
 
-}  // namespace
-
-void GraphRenderer::draw( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const {
-	drawGrid( target );
-	drawEdges( target, graph );
-	drawNodes( target, graph, font );
-}
-
-void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
+void drawGrid( sf::RenderTarget& target ) {
 	const sf::View view       = target.getView();
 	const sf::Vector2f center = view.getCenter();
 	const sf::Vector2f size   = view.getSize();
@@ -35,7 +27,7 @@ void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
 	const float top    = center.y - ( size.y * 0.5f );
 	const float bottom = center.y + ( size.y * 0.5f );
 
-	using VC = VisualConfig;
+	using VC = GraphRenderer::VisualConfig;
 
 	sf::VertexArray lines( sf::PrimitiveType::Lines );
 
@@ -61,6 +53,66 @@ void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
 	}
 
 	target.draw( lines );
+}
+
+void drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) {
+	using VC = GraphRenderer::VisualConfig;
+
+	direction = normalize( direction );
+	const sf::Vector2f perp{ -direction.y, direction.x };
+
+	const float arrowLength = 10.0f;
+	const float arrowWidth  = 5.0f;
+
+	sf::ConvexShape arrow;
+	arrow.setPointCount( 3 );
+	arrow.setPoint( 0, tip );
+	arrow.setPoint( 1, tip - direction * VC::ArrowLength + perp * VC::ArrowWidth );
+	arrow.setPoint( 2, tip - direction * VC::ArrowLength - perp * VC::ArrowWidth );
+	arrow.setFillColor( VC::ColorArrow );
+
+	target.draw( arrow );
+}
+
+std::string fitTextToWidth( const std::string& text, const sf::Font& font, unsigned int characterSize,
+                            float maxWidth ) {
+	if ( text.empty() ) {
+		return text;
+	}
+
+	sf::Text measure( font, text, characterSize );
+	if ( measure.getLocalBounds().size.x <= maxWidth ) {
+		return text;
+	}
+
+	const std::string ellipsis = "...";
+	sf::Text ellipsisMeasure( font, ellipsis, characterSize );
+	const float ellipsisWidth = ellipsisMeasure.getLocalBounds().size.x;
+
+	if ( ellipsisWidth > maxWidth ) {
+		return "";
+	}
+
+	std::string result = text;
+
+	while ( !result.empty() ) {
+		result.pop_back();
+
+		sf::Text candidate( font, result + ellipsis, characterSize );
+		if ( candidate.getLocalBounds().size.x <= maxWidth ) {
+			return result + ellipsis;
+		}
+	}
+
+	return "";
+}
+
+}  // namespace
+
+void GraphRenderer::draw( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const {
+	drawGrid( target );
+	drawEdges( target, graph );
+	drawNodes( target, graph, font );
 }
 
 void GraphRenderer::drawEdges( sf::RenderTarget& target, const Graph& graph ) const {
@@ -100,46 +152,50 @@ void GraphRenderer::drawNodes( sf::RenderTarget& target, const Graph& graph, con
 }
 
 void GraphRenderer::drawSingleNode( sf::RenderTarget& target, const Node& node, const sf::Font& font ) const {
+	using VC = VisualConfig;
+
 	sf::RectangleShape shadow;
-	shadow.setPosition( { node.x + 4.0f, node.y + 4.0f } );
+	shadow.setPosition( { node.x + VC::NodeShadowOffset, node.y + VC::NodeShadowOffset } );
 	shadow.setSize( { node.width, node.height } );
-	shadow.setFillColor( sf::Color( 0, 0, 0, 80 ) );
+	shadow.setFillColor( VC::ColorNodeShadow );
 	target.draw( shadow );
 
 	sf::RectangleShape body;
 	body.setPosition( { node.x, node.y } );
 	body.setSize( { node.width, node.height } );
-	body.setFillColor( sf::Color( 42, 47, 56 ) );
-	body.setOutlineThickness( 2.0f );
-	body.setOutlineColor( sf::Color( 95, 170, 255 ) );
+	body.setFillColor( VC::ColorNodeBody );
+	body.setOutlineThickness( VC::NodeOutlineThickness );
+	body.setOutlineColor( VC::ColorNodeOutline );
 	target.draw( body );
 
 	sf::RectangleShape header;
 	header.setPosition( { node.x, node.y } );
-	header.setSize( { node.width, 26.0f } );
-	header.setFillColor( sf::Color( 58, 66, 78 ) );
+	header.setSize( { node.width, VC::NodeHeaderHeight } );
+	header.setFillColor( VC::ColorNodeHeader );
 	target.draw( header );
 
 	constexpr float horizontalPadding = 10.0f;
 	constexpr unsigned int titleSize  = 16;
 
-	const float maxTitleWidth     = std::max( 0.0f, node.width - 2.0f * horizontalPadding );
-	const std::string fittedTitle = fitTextToWidth( node.name, font, titleSize, maxTitleWidth );
+	const float maxTitleWidth     = std::max( 0.0f, node.width - ( 2.0f * VC::NodeHorizontalPadding ) );
+	const std::string fittedTitle = fitTextToWidth( node.name, font, VC::NodeTitleSize, maxTitleWidth );
 
 	sf::Text title( font, fittedTitle, titleSize );
 	title.setFillColor( sf::Color::White );
-	title.setPosition( { node.x + horizontalPadding, node.y + 6.0f } );
+	title.setPosition( { node.x + horizontalPadding, node.y + VC::NodeTitleTopMargin } );
 	target.draw( title );
 
-	sf::Text idText( font, "#" + std::to_string( node.id ), 12 );
-	idText.setFillColor( sf::Color( 190, 190, 190 ) );
-	idText.setPosition( { node.x + 10.0f, node.y + node.height - 22.0f } );
+	sf::Text idText( font, "#" + std::to_string( node.id ), VC::NodeIdSize );
+	idText.setFillColor( VC::ColorTextId );
+	idText.setPosition( { node.x + VC::NodeHorizontalPadding, node.y + node.height - VC::NodeIdBottomOffset } );
 	target.draw( idText );
 }
 
 void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, const Node& to ) const {
-	const sf::Vector2f start{ from.x + from.width, from.y + from.height * 0.5f };
-	const sf::Vector2f end{ to.x, to.y + to.height * 0.5f };
+	using VC = VisualConfig;
+
+	const sf::Vector2f start{ from.x + from.width, from.y + ( from.height * 0.5f ) };
+	const sf::Vector2f end{ to.x, to.y + ( to.height * 0.5f ) };
 
 	const bool isBackwardEdge = end.x <= start.x;
 
@@ -154,7 +210,7 @@ void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, 
 		path[ 3 ].position = end;
 
 		for ( std::size_t i = 0; i < path.getVertexCount(); ++i ) {
-			path[ i ].color = sf::Color( 210, 210, 210 );
+			path[ i ].color = VC::ColorEdge;
 		}
 
 		target.draw( path );
@@ -167,7 +223,7 @@ void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, 
 	const float exitX   = start.x + 40.0f;
 	const float entryX  = end.x - 40.0f;
 
-	sf::VertexArray path( sf::PrimitiveType::LineStrip, 6 );
+	sf::VertexArray path( sf::PrimitiveType::LineStrip, VC::EdgeDetourYOffset );
 	path[ 0 ].position = start;
 	path[ 1 ].position = { exitX, start.y };
 	path[ 2 ].position = { exitX, detourY };
@@ -176,61 +232,11 @@ void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, 
 	path[ 5 ].position = end;
 
 	for ( std::size_t i = 0; i < path.getVertexCount(); ++i ) {
-		path[ i ].color = sf::Color( 210, 210, 210 );
+		path[ i ].color = VC::ColorEdge;
 	}
 
 	target.draw( path );
 	drawArrowHead( target, end, { -1.0f, 0.0f } );
-}
-
-void GraphRenderer::drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) const {
-	direction = normalize( direction );
-	const sf::Vector2f perp{ -direction.y, direction.x };
-
-	const float arrowLength = 10.0f;
-	const float arrowWidth  = 5.0f;
-
-	sf::ConvexShape arrow;
-	arrow.setPointCount( 3 );
-	arrow.setPoint( 0, tip );
-	arrow.setPoint( 1, tip - direction * arrowLength + perp * arrowWidth );
-	arrow.setPoint( 2, tip - direction * arrowLength - perp * arrowWidth );
-	arrow.setFillColor( sf::Color( 220, 220, 220 ) );
-
-	target.draw( arrow );
-}
-
-std::string GraphRenderer::fitTextToWidth( const std::string& text, const sf::Font& font, unsigned int characterSize,
-                                           float maxWidth ) const {
-	if ( text.empty() ) {
-		return text;
-	}
-
-	sf::Text measure( font, text, characterSize );
-	if ( measure.getLocalBounds().size.x <= maxWidth ) {
-		return text;
-	}
-
-	const std::string ellipsis = "...";
-	sf::Text ellipsisMeasure( font, ellipsis, characterSize );
-	const float ellipsisWidth = ellipsisMeasure.getLocalBounds().size.x;
-
-	if ( ellipsisWidth > maxWidth ) {
-		return "";
-	}
-
-	std::string result = text;
-
-	while ( !result.empty() ) {
-		result.pop_back();
-
-		sf::Text candidate( font, result + ellipsis, characterSize );
-		if ( candidate.getLocalBounds().size.x <= maxWidth ) {
-			return result + ellipsis;
-		}
-	}
-
-	return "";
 }
 
 }  // namespace task2
