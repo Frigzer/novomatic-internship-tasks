@@ -17,63 +17,6 @@ sf::Vector2f normalize( sf::Vector2f v ) {
 	return { v.x / length, v.y / length };
 }
 
-void drawGrid( sf::RenderTarget& target ) {
-	const sf::View view       = target.getView();
-	const sf::Vector2f center = view.getCenter();
-	const sf::Vector2f size   = view.getSize();
-
-	const float left   = center.x - ( size.x * 0.5f );
-	const float right  = center.x + ( size.x * 0.5f );
-	const float top    = center.y - ( size.y * 0.5f );
-	const float bottom = center.y + ( size.y * 0.5f );
-
-	using VC = GraphRenderer::VisualConfig;
-
-	sf::VertexArray lines( sf::PrimitiveType::Lines );
-
-	auto appendLine = [ & ]( sf::Vector2f a, sf::Vector2f b, sf::Color color ) {
-		lines.append( sf::Vertex( a, color ) );
-		lines.append( sf::Vertex( b, color ) );
-	};
-
-	const float firstVertical = std::floor( left / VC::MinorGridStep ) * VC::MinorGridStep;
-	for ( float x = firstVertical; x <= right; x += VC::MinorGridStep ) {
-		const bool major = std::fmod( std::abs( x ), VC::MajorGridStep ) < VC::GridTolerance ||
-		                   std::fmod( std::abs( x ), VC::MajorGridStep ) > ( VC::MajorGridStep - VC::GridTolerance );
-
-		appendLine( { x, top }, { x, bottom }, major ? VC::ColorMajorGrid : VC::ColorMinorGrid );
-	}
-
-	const float firstHorizontal = std::floor( top / VC::MinorGridStep ) * VC::MinorGridStep;
-	for ( float y = firstHorizontal; y <= bottom; y += VC::MinorGridStep ) {
-		const bool major = std::fmod( std::abs( y ), VC::MajorGridStep ) < VC::GridTolerance ||
-		                   std::fmod( std::abs( y ), VC::MajorGridStep ) > ( VC::MajorGridStep - VC::GridTolerance );
-
-		appendLine( { left, y }, { right, y }, major ? VC::ColorMajorGrid : VC::ColorMinorGrid );
-	}
-
-	target.draw( lines );
-}
-
-void drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) {
-	using VC = GraphRenderer::VisualConfig;
-
-	direction = normalize( direction );
-	const sf::Vector2f perp{ -direction.y, direction.x };
-
-	const float arrowLength = 10.0f;
-	const float arrowWidth  = 5.0f;
-
-	sf::ConvexShape arrow;
-	arrow.setPointCount( 3 );
-	arrow.setPoint( 0, tip );
-	arrow.setPoint( 1, tip - direction * VC::ArrowLength + perp * VC::ArrowWidth );
-	arrow.setPoint( 2, tip - direction * VC::ArrowLength - perp * VC::ArrowWidth );
-	arrow.setFillColor( VC::ColorArrow );
-
-	target.draw( arrow );
-}
-
 std::string fitTextToWidth( const std::string& text, const sf::Font& font, unsigned int characterSize,
                             float maxWidth ) {
 	if ( text.empty() ) {
@@ -113,6 +56,63 @@ void GraphRenderer::draw( sf::RenderTarget& target, const Graph& graph, const sf
 	drawGrid( target );
 	drawEdges( target, graph );
 	drawNodes( target, graph, font );
+}
+
+void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
+	const sf::View view       = target.getView();
+	const sf::Vector2f center = view.getCenter();
+	const sf::Vector2f size   = view.getSize();
+
+	const float left   = center.x - ( size.x * 0.5f );
+	const float right  = center.x + ( size.x * 0.5f );
+	const float top    = center.y - ( size.y * 0.5f );
+	const float bottom = center.y + ( size.y * 0.5f );
+
+	using VC = VisualConfig;
+
+	sf::VertexArray lines( sf::PrimitiveType::Lines );
+
+	auto appendLine = [ & ]( sf::Vector2f a, sf::Vector2f b, sf::Color color ) {
+		lines.append( sf::Vertex( a, color ) );
+		lines.append( sf::Vertex( b, color ) );
+	};
+
+	const float firstVertical = std::floor( left / VC::MinorGridStep ) * VC::MinorGridStep;
+	for ( float x = firstVertical; x <= right; x += VC::MinorGridStep ) {
+		const bool major = std::fmod( std::abs( x ), VC::MajorGridStep ) < VC::GridTolerance ||
+		                   std::fmod( std::abs( x ), VC::MajorGridStep ) > ( VC::MajorGridStep - VC::GridTolerance );
+
+		appendLine( { x, top }, { x, bottom }, major ? VC::ColorMajorGrid : VC::ColorMinorGrid );
+	}
+
+	const float firstHorizontal = std::floor( top / VC::MinorGridStep ) * VC::MinorGridStep;
+	for ( float y = firstHorizontal; y <= bottom; y += VC::MinorGridStep ) {
+		const bool major = std::fmod( std::abs( y ), VC::MajorGridStep ) < VC::GridTolerance ||
+		                   std::fmod( std::abs( y ), VC::MajorGridStep ) > ( VC::MajorGridStep - VC::GridTolerance );
+
+		appendLine( { left, y }, { right, y }, major ? VC::ColorMajorGrid : VC::ColorMinorGrid );
+	}
+
+	target.draw( lines );
+}
+
+void GraphRenderer::drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) const {
+	using VC = VisualConfig;
+
+	direction = normalize( direction );
+	const sf::Vector2f perp{ -direction.y, direction.x };
+
+	const float arrowLength = 10.0f;
+	const float arrowWidth  = 5.0f;
+
+	sf::ConvexShape arrow;
+	arrow.setPointCount( 3 );
+	arrow.setPoint( 0, tip );
+	arrow.setPoint( 1, tip - direction * VC::ArrowLength + perp * VC::ArrowWidth );
+	arrow.setPoint( 2, tip - direction * VC::ArrowLength - perp * VC::ArrowWidth );
+	arrow.setFillColor( VC::ColorArrow );
+
+	target.draw( arrow );
 }
 
 void GraphRenderer::drawEdges( sf::RenderTarget& target, const Graph& graph ) const {

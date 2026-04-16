@@ -3,12 +3,14 @@
 #include "graph.hpp"
 
 #include <SFML/Graphics.hpp>
-#include <string>
 
 namespace task2 {
 
 class GraphRenderer {
 public:
+	void draw( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const;
+
+private:
 	struct VisualConfig {
 		//
 		static constexpr float MinorGridStep = 50.0f;
@@ -45,16 +47,19 @@ public:
 		static constexpr float ArrowLength = 10.0f;
 		static constexpr float ArrowWidth  = 5.0f;
 		static inline const sf::Color ColorArrow{ 220, 220, 220 };
+
+		static constexpr std::size_t PathPointsForward  = 4;
+		static constexpr std::size_t PathPointsBackward = 6;
 	};
 
-	void draw( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const;
-
-private:
+	void drawGrid( sf::RenderTarget& target ) const;
 	void drawEdges( sf::RenderTarget& target, const Graph& graph ) const;
 	void drawNodes( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const;
 
 	void drawSingleNode( sf::RenderTarget& target, const Node& node, const sf::Font& font ) const;
 	void drawSingleEdge( sf::RenderTarget& target, const Node& from, const Node& to ) const;
+
+	void drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) const;
 };
 
 }  // namespace task2
