@@ -47,21 +47,23 @@ std::optional< ReservationResult > TicketServer::reserveTicket( const std::strin
 	std::scoped_lock lock( mutex_ );
 	cleanupExpiredReservations();
 
-	Ticket* ticket = findAvailableTicketByType( ticket_type );
-	if ( !ticket ) return std::nullopt;
+	const auto result = findAvailableTicketByType( ticket_type );
+	if ( !result ) return std::nullopt;
 
-	ticket->status = TicketStatus::Reserved;
+	Ticket& ticket = *result.value();
+
+	ticket.status = TicketStatus::Reserved;
 
 	const auto now = clock_();
 	Reservation res{ .id         = next_reservation_id_++,
-	                 .ticket_id  = ticket->id,
+	                 .ticket_id  = ticket.id,
 	                 .created_at = now,
 	                 .expires_at = now + reservation_timeout_ };
 
 	reservations_.push_back( res );
 
 	return ReservationResult{
-	    .ticket_type = ticket->type, .reservation_id = res.id, .ticket_id = ticket->id, .price = ticket->price };
+	    .ticket_type = ticket.type, .reservation_id = res.id, .ticket_id = ticket.id, .price = ticket.price };
 }
 
 bool TicketServer::cancelReservation( ReservationId reservation_id ) {
@@ -153,11 +155,11 @@ void TicketServer::removeReservation( ReservationId reservation_id ) {
 	                     reservations_.end() );
 }
 
-Ticket* TicketServer::findAvailableTicketByType( const std::string& ticket_type ) {
+std::expected< Ticket*, std::monostate > TicketServer::findAvailableTicketByType( const std::string& ticket_type ) {
 	for ( auto& t : tickets_ ) {
 		if ( t.type == ticket_type && t.status == TicketStatus::Available ) return &t;
 	}
-	return nullptr;
+	return std::unexpected( std::monostate{} );
 }
 
 Ticket* TicketServer::findTicketById( TicketId id ) {
