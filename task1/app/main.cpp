@@ -14,7 +14,7 @@ void printMoney( task1::Money amount ) {
 int main() {
 	using namespace task1;
 
-	std::vector< Ticket > tickets = {
+	const std::vector< Ticket > tickets = {
 	    { .id = 1, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt },
 	    { .id = 2, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt },
 	    { .id = 3, .price = 170, .type = "reduced", .status = TicketStatus::Available, .owner = std::nullopt } };
@@ -34,7 +34,7 @@ int main() {
 	}
 
 	// Rezerwacja biletów]
-	auto reservation = client.selectTicket( "normal" );
+	const auto reservation = client.selectTicket( "normal" );
 	if ( !reservation.has_value() ) {
 		std::cout << "Error: Could not reserve ticket\n";
 		return 1;
@@ -43,7 +43,7 @@ int main() {
 	std::cout << "\nReserved ticket: " << reservation->ticket_type << " (ID: " << reservation->ticket_id << ")\n";
 
 	// Symulacja zakupu
-	CustomerData customer{ .first_name="Jan", .last_name="Kowalski" };
+	const CustomerData customer{ .first_name="Jan", .last_name="Kowalski" };
 
 	// Klient wrzuca 5 zł (500 groszy)
 	CoinInventory inserted( { { 500, 1 } } );
