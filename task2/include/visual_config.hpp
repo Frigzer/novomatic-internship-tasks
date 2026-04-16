@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <cstddef>
 
-namespace task2::config {
+namespace task2::VisualConfig {
 
 // Grid settings for the background
 inline constexpr float MinorGridStep = 50.0f;
@@ -44,4 +44,4 @@ inline const sf::Color ColorArrow{ 220, 220, 220 };
 inline constexpr std::size_t PathPointsForward  = 4;
 inline constexpr std::size_t PathPointsBackward = 6;
 
-}  // namespace task2::config
+}  // namespace task2::VisualConfig

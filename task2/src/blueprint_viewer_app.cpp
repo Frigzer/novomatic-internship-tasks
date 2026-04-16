@@ -1,5 +1,6 @@
 #include "blueprint_viewer_app.hpp"
 
+#include "graph_renderer.hpp"
 #include "json_io.hpp"
 #include "paths.hpp"
 #include "visual_config.hpp"
@@ -130,84 +131,80 @@ void BlueprintViewerApp::processEvents() {
 }
 
 void BlueprintViewerApp::handleEvent( const sf::Event& event ) {
-    handleSystemEvent( event );
+	handleSystemEvent( event );
 
-    if ( const auto* keyPressed = event.getIf< sf::Event::KeyPressed >() ) {
-        handleKeyboardEvent( *keyPressed );
-    } 
-    else if ( const auto* mouseWheel = event.getIf< sf::Event::MouseWheelScrolled >() ) {
-        handleMouseWheelEvent( *mouseWheel );
-    } 
-    else if ( event.is< sf::Event::MouseButtonPressed >() || event.is< sf::Event::MouseButtonReleased >() ) {
-        handleMouseButtonEvent( event );
-    } 
-    else if ( const auto* mouseMoved = event.getIf< sf::Event::MouseMoved >() ) {
-        handleMouseMoveEvent( *mouseMoved );
-    }
+	if ( const auto* keyPressed = event.getIf< sf::Event::KeyPressed >() ) {
+		handleKeyboardEvent( *keyPressed );
+	} else if ( const auto* mouseWheel = event.getIf< sf::Event::MouseWheelScrolled >() ) {
+		handleMouseWheelEvent( *mouseWheel );
+	} else if ( event.is< sf::Event::MouseButtonPressed >() || event.is< sf::Event::MouseButtonReleased >() ) {
+		handleMouseButtonEvent( event );
+	} else if ( const auto* mouseMoved = event.getIf< sf::Event::MouseMoved >() ) {
+		handleMouseMoveEvent( *mouseMoved );
+	}
 }
 
 void BlueprintViewerApp::handleSystemEvent( const sf::Event& event ) {
-    if ( event.is< sf::Event::Closed >() ) {
-        window_.close();
-    } else if ( const auto* resized = event.getIf< sf::Event::Resized >() ) {
-        graphView_.setSize( { static_cast< float >( resized->size.x ), static_cast< float >( resized->size.y ) } );
-    }
+	if ( event.is< sf::Event::Closed >() ) {
+		window_.close();
+	} else if ( const auto* resized = event.getIf< sf::Event::Resized >() ) {
+		graphView_.setSize( { static_cast< float >( resized->size.x ), static_cast< float >( resized->size.y ) } );
+	}
 }
 
 void BlueprintViewerApp::handleKeyboardEvent( const sf::Event::KeyPressed& event ) {
-    if ( ImGui::GetIO().WantCaptureKeyboard ) return;
+	if ( ImGui::GetIO().WantCaptureKeyboard ) return;
 
-    const float keyboardZoomFactor = 1.1f;
+	const float keyboardZoomFactor = 1.1f;
 
-    if ( event.code == sf::Keyboard::Key::Add || event.code == sf::Keyboard::Key::Equal ) {
-        graphView_.zoom( 1.0f / keyboardZoomFactor );
-    } else if ( event.code == sf::Keyboard::Key::Subtract || event.code == sf::Keyboard::Key::Hyphen ) {
-        graphView_.zoom( keyboardZoomFactor );
-    }
+	if ( event.code == sf::Keyboard::Key::Add || event.code == sf::Keyboard::Key::Equal ) {
+		graphView_.zoom( 1.0f / keyboardZoomFactor );
+	} else if ( event.code == sf::Keyboard::Key::Subtract || event.code == sf::Keyboard::Key::Hyphen ) {
+		graphView_.zoom( keyboardZoomFactor );
+	}
 }
 
 void BlueprintViewerApp::handleMouseWheelEvent( const sf::Event::MouseWheelScrolled& event ) {
-    if ( ImGui::GetIO().WantCaptureMouse || event.wheel != sf::Mouse::Wheel::Vertical ) return;
+	if ( ImGui::GetIO().WantCaptureMouse || event.wheel != sf::Mouse::Wheel::Vertical ) return;
 
-    const float zoomFactor = event.delta > 0 ? 0.9f : 1.1f;
-    const sf::Vector2i mousePixel = sf::Mouse::getPosition( window_ );
-    const sf::Vector2f beforeZoom = window_.mapPixelToCoords( mousePixel, graphView_ );
+	const float zoomFactor        = event.delta > 0 ? 0.9f : 1.1f;
+	const sf::Vector2i mousePixel = sf::Mouse::getPosition( window_ );
+	const sf::Vector2f beforeZoom = window_.mapPixelToCoords( mousePixel, graphView_ );
 
-    graphView_.zoom( zoomFactor );
+	graphView_.zoom( zoomFactor );
 
-    const sf::Vector2f afterZoom = window_.mapPixelToCoords( mousePixel, graphView_ );
-    graphView_.move( beforeZoom - afterZoom );
+	const sf::Vector2f afterZoom = window_.mapPixelToCoords( mousePixel, graphView_ );
+	graphView_.move( beforeZoom - afterZoom );
 }
 
 void BlueprintViewerApp::handleMouseButtonEvent( const sf::Event& event ) {
-    if ( ImGui::GetIO().WantCaptureMouse ) return;
+	if ( ImGui::GetIO().WantCaptureMouse ) return;
 
-    if ( const auto* pressed = event.getIf< sf::Event::MouseButtonPressed >() ) {
-        const bool isMiddle = ( pressed->button == sf::Mouse::Button::Middle );
-        const bool isCtrlLeft = ( pressed->button == sf::Mouse::Button::Left && 
-                                  sf::Keyboard::isKeyPressed( sf::Keyboard::Key::LControl ) );
+	if ( const auto* pressed = event.getIf< sf::Event::MouseButtonPressed >() ) {
+		const bool isMiddle = ( pressed->button == sf::Mouse::Button::Middle );
+		const bool isCtrlLeft =
+		    ( pressed->button == sf::Mouse::Button::Left && sf::Keyboard::isKeyPressed( sf::Keyboard::Key::LControl ) );
 
-        if ( isMiddle || isCtrlLeft ) {
-            isPanning_ = true;
-            lastMousePixel_ = { pressed->position.x, pressed->position.y };
-        }
-    } 
-    else if ( const auto* released = event.getIf< sf::Event::MouseButtonReleased >() ) {
-        if ( released->button == sf::Mouse::Button::Middle || released->button == sf::Mouse::Button::Left ) {
-            isPanning_ = false;
-        }
-    }
+		if ( isMiddle || isCtrlLeft ) {
+			isPanning_      = true;
+			lastMousePixel_ = { pressed->position.x, pressed->position.y };
+		}
+	} else if ( const auto* released = event.getIf< sf::Event::MouseButtonReleased >() ) {
+		if ( released->button == sf::Mouse::Button::Middle || released->button == sf::Mouse::Button::Left ) {
+			isPanning_ = false;
+		}
+	}
 }
 
 void BlueprintViewerApp::handleMouseMoveEvent( const sf::Event::MouseMoved& event ) {
-    if ( !isPanning_ ) return;
+	if ( !isPanning_ ) return;
 
-    const sf::Vector2i currentPixel{ event.position.x, event.position.y };
-    const sf::Vector2f previousWorld = window_.mapPixelToCoords( lastMousePixel_, graphView_ );
-    const sf::Vector2f currentWorld  = window_.mapPixelToCoords( currentPixel, graphView_ );
+	const sf::Vector2i currentPixel{ event.position.x, event.position.y };
+	const sf::Vector2f previousWorld = window_.mapPixelToCoords( lastMousePixel_, graphView_ );
+	const sf::Vector2f currentWorld  = window_.mapPixelToCoords( currentPixel, graphView_ );
 
-    graphView_.move( previousWorld - currentWorld );
-    lastMousePixel_ = currentPixel;
+	graphView_.move( previousWorld - currentWorld );
+	lastMousePixel_ = currentPixel;
 }
 
 void BlueprintViewerApp::update( sf::Time deltaTime ) {
@@ -216,10 +213,10 @@ void BlueprintViewerApp::update( sf::Time deltaTime ) {
 }
 
 void BlueprintViewerApp::render() {
-	window_.clear( config::ColorBackground );
+	window_.clear( VisualConfig::ColorBackground );
 
 	window_.setView( graphView_ );
-	renderer_.draw( window_, graph_, font_ );
+	GraphRenderer::draw( window_, graph_, font_ );
 
 	window_.setView( window_.getDefaultView() );
 	ImGui::SFML::Render( window_ );
@@ -305,34 +302,34 @@ void BlueprintViewerApp::drawGui() {
 	ImGui::Separator();
 
 	ImGui::Text( "Nodes: %zu", graph_.getNodes().size() );
-    ImGui::Text( "Edges: %zu", graph_.getEdges().size() );
-    
-    ImGui::TextWrapped( "Status: %s", statusMessage_.c_str() );
+	ImGui::Text( "Edges: %zu", graph_.getEdges().size() );
 
-    ImGui::Separator();
+	ImGui::TextWrapped( "Status: %s", statusMessage_.c_str() );
 
-    auto getCleanPath = []( const std::filesystem::path& path ) {
-        return path.parent_path().filename().string() + "/" + path.filename().string();
-    };
+	ImGui::Separator();
 
-    ImGui::TextDisabled( "Input:  %s", getCleanPath( paths::inputDir ).c_str() );
-    ImGui::TextDisabled( "Output: %s", getCleanPath( paths::outputDir ).c_str() );
+	auto getCleanPath = []( const std::filesystem::path& path ) {
+		return path.parent_path().filename().string() + "/" + path.filename().string();
+	};
 
-    ImGui::Separator();
+	ImGui::TextDisabled( "Input:  %s", getCleanPath( paths::inputDir ).c_str() );
+	ImGui::TextDisabled( "Output: %s", getCleanPath( paths::outputDir ).c_str() );
 
-    ImGui::Text( "Controls:" );
-    ImGui::BulletText( "Zoom:  Wheel or Keypad +/-" );
-    ImGui::BulletText( "Pan:   MMB or Ctrl + LPM" );
-    ImGui::BulletText( "Reset: 'Reset View' or 'Fit Graph'" );
+	ImGui::Separator();
 
-    if ( !ImGui::GetIO().WantCaptureMouse ) {
-        if ( const Node* hoveredNode = findHoveredNode(); hoveredNode != nullptr ) {
-            ImGui::BeginTooltip();
-            ImGui::Text( "%s", hoveredNode->name.c_str() );
-            ImGui::TextDisabled( "Node ID: %d", hoveredNode->id );
-            ImGui::EndTooltip();
-        }
-    }
+	ImGui::Text( "Controls:" );
+	ImGui::BulletText( "Zoom:  Wheel or Keypad +/-" );
+	ImGui::BulletText( "Pan:   MMB or Ctrl + LPM" );
+	ImGui::BulletText( "Reset: 'Reset View' or 'Fit Graph'" );
+
+	if ( !ImGui::GetIO().WantCaptureMouse ) {
+		if ( const Node* hoveredNode = findHoveredNode(); hoveredNode != nullptr ) {
+			ImGui::BeginTooltip();
+			ImGui::Text( "%s", hoveredNode->name.c_str() );
+			ImGui::TextDisabled( "Node ID: %d", hoveredNode->id );
+			ImGui::EndTooltip();
+		}
+	}
 
 	ImGui::End();
 }

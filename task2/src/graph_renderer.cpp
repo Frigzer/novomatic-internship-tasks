@@ -51,15 +51,7 @@ std::string fitTextToWidth( const std::string& text, const sf::Font& font, unsig
 	return "";
 }
 
-}  // namespace
-
-void GraphRenderer::draw( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const {
-	drawGrid( target );
-	drawEdges( target, graph );
-	drawNodes( target, graph, font );
-}
-
-void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
+void drawGrid( sf::RenderTarget& target ) {
 	const sf::View view       = target.getView();
 	const sf::Vector2f center = view.getCenter();
 	const sf::Vector2f size   = view.getSize();
@@ -69,7 +61,7 @@ void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
 	const float top    = center.y - ( size.y * 0.5f );
 	const float bottom = center.y + ( size.y * 0.5f );
 
-	namespace VC = config;
+	namespace VC = VisualConfig;
 
 	sf::VertexArray lines( sf::PrimitiveType::Lines );
 
@@ -97,8 +89,8 @@ void GraphRenderer::drawGrid( sf::RenderTarget& target ) const {
 	target.draw( lines );
 }
 
-void GraphRenderer::drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) const {
-	namespace VC = config;
+void drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, sf::Vector2f direction ) {
+	namespace VC = VisualConfig;
 
 	direction = normalize( direction );
 	const sf::Vector2f perp{ -direction.y, direction.x };
@@ -116,44 +108,8 @@ void GraphRenderer::drawArrowHead( sf::RenderTarget& target, sf::Vector2f tip, s
 	target.draw( arrow );
 }
 
-void GraphRenderer::drawEdges( sf::RenderTarget& target, const Graph& graph ) const {
-	for ( const auto& edge : graph.getEdges() ) {
-		const Node* from = graph.findNode( edge.from );
-		const Node* to   = graph.findNode( edge.to );
-
-		if ( from == nullptr || to == nullptr ) {
-			continue;
-		}
-
-		drawSingleEdge( target, *from, *to );
-	}
-}
-
-void GraphRenderer::drawNodes( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) const {
-	std::vector< std::reference_wrapper< const Node > > sortedNodes;
-	sortedNodes.reserve( graph.getNodes().size() );
-
-	for ( const auto& [ _, node ] : graph.getNodes() ) {
-		sortedNodes.push_back( std::cref( node ) );
-	}
-
-	std::ranges::sort( sortedNodes, []( const Node& a, const Node& b ) {
-		if ( a.x != b.x ) {
-			return a.x < b.x;
-		}
-		if ( a.y != b.y ) {
-			return a.y < b.y;
-		}
-		return a.id < b.id;
-	} );
-
-	for ( const Node& node : sortedNodes ) {
-		drawSingleNode( target, node, font );
-	}
-}
-
-void GraphRenderer::drawSingleNode( sf::RenderTarget& target, const Node& node, const sf::Font& font ) const {
-	namespace VC = config;
+void drawSingleNode( sf::RenderTarget& target, const Node& node, const sf::Font& font ) {
+	namespace VC = VisualConfig;
 
 	sf::RectangleShape shadow;
 	shadow.setPosition( { node.x + VC::NodeShadowOffset, node.y + VC::NodeShadowOffset } );
@@ -192,8 +148,31 @@ void GraphRenderer::drawSingleNode( sf::RenderTarget& target, const Node& node, 
 	target.draw( idText );
 }
 
-void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, const Node& to ) const {
-	namespace VC = config;
+void drawNodes( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) {
+	std::vector< std::reference_wrapper< const Node > > sortedNodes;
+	sortedNodes.reserve( graph.getNodes().size() );
+
+	for ( const auto& [ _, node ] : graph.getNodes() ) {
+		sortedNodes.push_back( std::cref( node ) );
+	}
+
+	std::ranges::sort( sortedNodes, []( const Node& a, const Node& b ) {
+		if ( a.x != b.x ) {
+			return a.x < b.x;
+		}
+		if ( a.y != b.y ) {
+			return a.y < b.y;
+		}
+		return a.id < b.id;
+	} );
+
+	for ( const Node& node : sortedNodes ) {
+		drawSingleNode( target, node, font );
+	}
+}
+
+void drawSingleEdge( sf::RenderTarget& target, const Node& from, const Node& to ) {
+	namespace VC = VisualConfig;
 
 	const sf::Vector2f start{ from.x + from.width, from.y + ( from.height * 0.5f ) };
 	const sf::Vector2f end{ to.x, to.y + ( to.height * 0.5f ) };
@@ -237,6 +216,27 @@ void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, 
 
 	target.draw( path );
 	drawArrowHead( target, end, { -1.0f, 0.0f } );
+}
+
+void drawEdges( sf::RenderTarget& target, const Graph& graph ) {
+	for ( const auto& edge : graph.getEdges() ) {
+		const Node* from = graph.findNode( edge.from );
+		const Node* to   = graph.findNode( edge.to );
+
+		if ( from == nullptr || to == nullptr ) {
+			continue;
+		}
+
+		drawSingleEdge( target, *from, *to );
+	}
+}
+
+}  // namespace
+
+void GraphRenderer::draw( sf::RenderTarget& target, const Graph& graph, const sf::Font& font ) {
+	drawGrid( target );
+	drawEdges( target, graph );
+	drawNodes( target, graph, font );
 }
 
 }  // namespace task2

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "graph.hpp"
-#include "graph_renderer.hpp"
 #include "layout_engine.hpp"
 
 #include <SFML/Graphics.hpp>
@@ -73,7 +72,6 @@ private:
 	sf::Clock deltaClock_;
 
 	Graph graph_;
-	GraphRenderer renderer_;
 	LayoutEngine::Config layoutConfig_;
 
 	bool isPanning_{ false };

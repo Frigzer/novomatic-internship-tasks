@@ -201,7 +201,6 @@ FilteredAdjacency buildAcyclicAdjacency( const Graph& graph, const std::vector< 
 				adjacency.incoming[ next ].push_back( current );
 			} else {
 				// state[next] == Visiting
-				// To jest back edge - pomijamy go przy layeringu.
 			}
 		}
 
