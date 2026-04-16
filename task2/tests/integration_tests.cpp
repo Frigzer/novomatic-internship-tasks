@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <limits>
 #include <string>
@@ -153,6 +154,67 @@ TEST( IntegrationTests, ApplyingLayoutToLoadedTwoComponentGraphSeparatesComponen
 	std::ranges::sort( ranges, []( const auto& lhs, const auto& rhs ) { return lhs.first < rhs.first; } );
 
 	EXPECT_GE( ranges[ 1 ].first - ranges[ 0 ].second, config.component_spacing );
+}
+
+TEST( IntegrationTests, ApplyingLayoutAssignsFiniteCoordinatesToEveryNodeInAllBundledInputs ) {
+	const std::array< const char*, 8 > fileNames{ {
+	    "branch.json",
+	    "chain.json",
+	    "cycle.json",
+	    "dense_graph.json",
+	    "diamond.json",
+	    "long_labels.json",
+	    "sample_graph.json",
+	    "two_components.json",
+	} };
+
+	LayoutEngine::Config config;
+	config.margin_x = 27.0f;
+	config.margin_y = 31.0f;
+
+	LayoutEngine engine( config );
+
+	for ( const char* fileName : fileNames ) {
+		Graph graph = JsonGraphIO::loadFromFile( paths::inputDir / fileName );
+		engine.applyLayout( graph );
+
+		for ( const auto& [ id, node ] : graph.getNodes() ) {
+			EXPECT_TRUE( std::isfinite( node.x ) ) << fileName << " node " << id;
+			EXPECT_TRUE( std::isfinite( node.y ) ) << fileName << " node " << id;
+			EXPECT_GE( node.x, config.margin_x ) << fileName << " node " << id;
+			EXPECT_GE( node.y, config.margin_y ) << fileName << " node " << id;
+		}
+	}
+}
+
+TEST( IntegrationTests, LayoutKeepsCustomNodeDimensionsForBundledLongLabelsGraph ) {
+	Graph graph = JsonGraphIO::loadFromFile( paths::inputDir / "long_labels.json" );
+
+	LayoutEngine::Config config;
+	config.margin_x      = 60.0f;
+	config.margin_y      = 40.0f;
+	config.layer_spacing = 260.0f;
+
+	LayoutEngine engine( config );
+	engine.applyLayout( graph );
+
+	const Node* node1 = graph.findNode( 1 );
+	const Node* node2 = graph.findNode( 2 );
+	const Node* node3 = graph.findNode( 3 );
+	const Node* node4 = graph.findNode( 4 );
+	ASSERT_NE( node1, nullptr );
+	ASSERT_NE( node2, nullptr );
+	ASSERT_NE( node3, nullptr );
+	ASSERT_NE( node4, nullptr );
+
+	EXPECT_FLOAT_EQ( node1->width, 320.0f );
+	EXPECT_FLOAT_EQ( node2->width, 360.0f );
+	EXPECT_FLOAT_EQ( node3->width, 360.0f );
+	EXPECT_FLOAT_EQ( node4->width, 380.0f );
+	EXPECT_FLOAT_EQ( node1->height, 90.0f );
+	EXPECT_FLOAT_EQ( node2->height, 90.0f );
+	EXPECT_FLOAT_EQ( node3->height, 90.0f );
+	EXPECT_FLOAT_EQ( node4->height, 90.0f );
 }
 
 }  // namespace task2
