@@ -6,16 +6,20 @@
 #include <optional>
 #include <string>
 
-
 namespace task1 {
 
 using TicketId      = std::uint64_t;
 using ReservationId = std::uint64_t;
 using Money         = std::int64_t;  // w groszach
 
-enum class TicketStatus { Available, Reserved, Sold };
+enum class TicketStatus : std::uint8_t { Available, Reserved, Sold };
 
-enum class PurchaseError { ReservationNotFound, ReservationExpired, InsufficientFunds, CannotMakeChange };
+enum class PurchaseError : std::uint8_t {
+	ReservationNotFound,
+	ReservationExpired,
+	InsufficientFunds,
+	CannotMakeChange
+};
 
 struct CustomerData {
 	std::string first_name;
