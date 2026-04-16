@@ -40,6 +40,7 @@ target_link_libraries(task2 PRIVATE task2_lib)
 find_package(GTest REQUIRED)
 
 add_executable(task2_tests
+    tests/graph_tests.cpp
     tests/json_io_tests.cpp
     tests/layout_engine_tests.cpp
 )
