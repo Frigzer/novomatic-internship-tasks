@@ -58,6 +58,9 @@ compile_commands.json
 *.bak
 *.swp
 
+# Editor settings
+.vscode/
+
 # vcpkg
 vcpkg_installed/
 
