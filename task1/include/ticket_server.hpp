@@ -4,6 +4,7 @@
 #include "models.hpp"
 
 #include <chrono>
+#include <expected>
 #include <functional>
 #include <mutex>
 #include <variant>
@@ -32,7 +33,7 @@ public:
 private:
 	void cleanupExpiredReservations();
 
-	Ticket* findAvailableTicketByType( const std::string& ticket_type );
+	std::expected< Ticket*, std::monostate > findAvailableTicketByType( const std::string& ticket_type );
 	Ticket* findTicketById( TicketId ticket_id );
 	Reservation* findReservationById( ReservationId reservation_id );
 
