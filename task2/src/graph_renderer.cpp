@@ -229,7 +229,7 @@ void GraphRenderer::drawSingleEdge( sf::RenderTarget& target, const Node& from, 
 	path[ 2 ].position = { exitX, detourY };
 	path[ 3 ].position = { entryX, detourY };
 	path[ 4 ].position = { entryX, end.y };
-	path[ 5 ].position = end;
+	path[ 5 ].position = end; // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 
 	for ( std::size_t i = 0; i < path.getVertexCount(); ++i ) {
 		path[ i ].color = VC::ColorEdge;
