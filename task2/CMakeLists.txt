@@ -43,6 +43,7 @@ add_executable(task2_tests
     tests/graph_tests.cpp
     tests/json_io_tests.cpp
     tests/layout_engine_tests.cpp
+    tests/integration_tests.cpp
 )
 
 target_link_libraries(task2_tests

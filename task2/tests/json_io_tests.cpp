@@ -42,9 +42,8 @@ TEST( JsonGraphIOTests, LoadsValidGraphFromSampleFile ) {
 }
 
 TEST( JsonGraphIOTests, UsesDefaultValuesForMissingOptionalNodeFields ) {
-	const auto path = writeJsonFile(
-	    "defaults",
-	    R"({
+	const auto path = writeJsonFile( "defaults",
+	                                 R"({
 	        "nodes": [
 	            { "id": 1, "name": "Start" }
 	        ],
@@ -63,10 +62,29 @@ TEST( JsonGraphIOTests, UsesDefaultValuesForMissingOptionalNodeFields ) {
 	std::filesystem::remove( path );
 }
 
+TEST( JsonGraphIOTests, ThrowsWhenInputFileDoesNotExist ) {
+	const auto path = std::filesystem::temp_directory_path() / "task2_missing_input_file.json";
+	std::filesystem::remove( path );
+
+	EXPECT_THROW( JsonGraphIO::loadFromFile( path ), std::runtime_error );
+}
+
+TEST( JsonGraphIOTests, ThrowsWhenJsonIsMalformed ) {
+	const auto path = writeJsonFile( "malformed_json",
+	                                 R"({
+	        "nodes": [
+	            { "id": 1, "name": "Broken" }
+	        ],
+	        "edges": [
+	    })" );
+
+	EXPECT_THROW( JsonGraphIO::loadFromFile( path ), nlohmann::json::parse_error );
+	std::filesystem::remove( path );
+}
+
 TEST( JsonGraphIOTests, ThrowsWhenNodesArrayIsMissing ) {
-	const auto path = writeJsonFile(
-	    "missing_nodes",
-	    R"({
+	const auto path = writeJsonFile( "missing_nodes",
+	                                 R"({
 	        "edges": []
 	    })" );
 
@@ -75,9 +93,8 @@ TEST( JsonGraphIOTests, ThrowsWhenNodesArrayIsMissing ) {
 }
 
 TEST( JsonGraphIOTests, ThrowsWhenEdgesArrayIsMissing ) {
-	const auto path = writeJsonFile(
-	    "missing_edges",
-	    R"({
+	const auto path = writeJsonFile( "missing_edges",
+	                                 R"({
 	        "nodes": [
 	            { "id": 1, "name": "Start" }
 	        ]
@@ -87,10 +104,59 @@ TEST( JsonGraphIOTests, ThrowsWhenEdgesArrayIsMissing ) {
 	std::filesystem::remove( path );
 }
 
+TEST( JsonGraphIOTests, ThrowsWhenNodesFieldIsNotAnArray ) {
+	const auto path = writeJsonFile( "nodes_not_array",
+	                                 R"({
+	        "nodes": {},
+	        "edges": []
+	    })" );
+
+	EXPECT_THROW( JsonGraphIO::loadFromFile( path ), std::runtime_error );
+	std::filesystem::remove( path );
+}
+
+TEST( JsonGraphIOTests, ThrowsWhenEdgesFieldIsNotAnArray ) {
+	const auto path = writeJsonFile( "edges_not_array",
+	                                 R"({
+	        "nodes": [
+	            { "id": 1, "name": "Start" }
+	        ],
+	        "edges": {}
+	    })" );
+
+	EXPECT_THROW( JsonGraphIO::loadFromFile( path ), std::runtime_error );
+	std::filesystem::remove( path );
+}
+
+TEST( JsonGraphIOTests, ThrowsWhenNodeIdFieldIsMissing ) {
+	const auto path = writeJsonFile( "missing_node_id",
+	                                 R"({
+	        "nodes": [
+	            { "name": "No id" }
+	        ],
+	        "edges": []
+	    })" );
+
+	EXPECT_THROW( JsonGraphIO::loadFromFile( path ), nlohmann::json::out_of_range );
+	std::filesystem::remove( path );
+}
+
+TEST( JsonGraphIOTests, ThrowsWhenNodeNameIsMissing ) {
+	const auto path = writeJsonFile( "missing_node_name",
+	                                 R"({
+	        "nodes": [
+	            { "id": 1 }
+	        ],
+	        "edges": []
+	    })" );
+
+	EXPECT_THROW( JsonGraphIO::loadFromFile( path ), nlohmann::json::out_of_range );
+	std::filesystem::remove( path );
+}
+
 TEST( JsonGraphIOTests, ThrowsWhenNodeNameIsEmpty ) {
-	const auto path = writeJsonFile(
-	    "empty_name",
-	    R"({
+	const auto path = writeJsonFile( "empty_name",
+	                                 R"({
 	        "nodes": [
 	            { "id": 1, "name": "" }
 	        ],
@@ -102,9 +168,8 @@ TEST( JsonGraphIOTests, ThrowsWhenNodeNameIsEmpty ) {
 }
 
 TEST( JsonGraphIOTests, ThrowsWhenNodeWidthIsNonPositive ) {
-	const auto path = writeJsonFile(
-	    "bad_width",
-	    R"({
+	const auto path = writeJsonFile( "bad_width",
+	                                 R"({
 	        "nodes": [
 	            { "id": 1, "name": "Bad", "width": 0.0 }
 	        ],
@@ -116,9 +181,8 @@ TEST( JsonGraphIOTests, ThrowsWhenNodeWidthIsNonPositive ) {
 }
 
 TEST( JsonGraphIOTests, ThrowsWhenNodeHeightIsNonPositive ) {
-	const auto path = writeJsonFile(
-	    "bad_height",
-	    R"({
+	const auto path = writeJsonFile( "bad_height",
+	                                 R"({
 	        "nodes": [
 	            { "id": 1, "name": "Bad", "height": -5.0 }
 	        ],
@@ -130,9 +194,8 @@ TEST( JsonGraphIOTests, ThrowsWhenNodeHeightIsNonPositive ) {
 }
 
 TEST( JsonGraphIOTests, ThrowsWhenDuplicateNodeIdsAppearInJson ) {
-	const auto path = writeJsonFile(
-	    "duplicate_nodes",
-	    R"({
+	const auto path = writeJsonFile( "duplicate_nodes",
+	                                 R"({
 	        "nodes": [
 	            { "id": 1, "name": "First" },
 	            { "id": 1, "name": "Second" }
@@ -145,9 +208,8 @@ TEST( JsonGraphIOTests, ThrowsWhenDuplicateNodeIdsAppearInJson ) {
 }
 
 TEST( JsonGraphIOTests, ThrowsWhenEdgeReferencesMissingNode ) {
-	const auto path = writeJsonFile(
-	    "orphan_edge",
-	    R"({
+	const auto path = writeJsonFile( "orphan_edge",
+	                                 R"({
 	        "nodes": [
 	            { "id": 1, "name": "Start" }
 	        ],
@@ -157,6 +219,22 @@ TEST( JsonGraphIOTests, ThrowsWhenEdgeReferencesMissingNode ) {
 	    })" );
 
 	EXPECT_THROW( JsonGraphIO::loadFromFile( path ), std::runtime_error );
+	std::filesystem::remove( path );
+}
+
+TEST( JsonGraphIOTests, ThrowsWhenEdgeFromFieldIsMissing ) {
+	const auto path = writeJsonFile( "missing_edge_from",
+	                                 R"({
+	        "nodes": [
+	            { "id": 1, "name": "A" },
+	            { "id": 2, "name": "B" }
+	        ],
+	        "edges": [
+	            { "to": 2 }
+	        ]
+	    })" );
+
+	EXPECT_THROW( JsonGraphIO::loadFromFile( path ), nlohmann::json::out_of_range );
 	std::filesystem::remove( path );
 }
 
@@ -227,6 +305,34 @@ TEST( JsonGraphIOTests, SaveToFileRoundTripsNodeGeometryAndEdges ) {
 	std::filesystem::remove( path );
 }
 
+TEST( JsonGraphIOTests, SaveToFileWritesEmptyGraphAsEmptyArrays ) {
+	Graph graph;
+
+	const auto path = makeTempPath( "empty_graph" );
+	JsonGraphIO::saveToFile( graph, path );
+
+	const auto json = readJsonFile( path );
+	ASSERT_TRUE( json.contains( "nodes" ) );
+	ASSERT_TRUE( json.contains( "edges" ) );
+	EXPECT_TRUE( json[ "nodes" ].is_array() );
+	EXPECT_TRUE( json[ "edges" ].is_array() );
+	EXPECT_TRUE( json[ "nodes" ].empty() );
+	EXPECT_TRUE( json[ "edges" ].empty() );
+
+	std::filesystem::remove( path );
+}
+
+TEST( JsonGraphIOTests, SaveToFileFailsWhenParentDirectoryDoesNotExist ) {
+	Graph graph;
+	graph.addNode( { .id = 1, .name = "A" } );
+
+	const auto missingParent = std::filesystem::temp_directory_path() / "task2_missing_dir" / "nested" / "graph.json";
+	std::filesystem::remove( missingParent );
+	std::filesystem::remove_all( missingParent.parent_path().parent_path() );
+
+	EXPECT_THROW( JsonGraphIO::saveToFile( graph, missingParent ), std::runtime_error );
+}
+
 TEST( JsonGraphIOTests, SaveToFileRejectsInvalidGraphs ) {
 	Graph graph;
 	graph.addNode( { .id = 1, .name = "", .width = Node::DefaultWidth, .height = Node::DefaultHeight } );
@@ -234,6 +340,18 @@ TEST( JsonGraphIOTests, SaveToFileRejectsInvalidGraphs ) {
 	const auto path = makeTempPath( "invalid_save" );
 	EXPECT_THROW( JsonGraphIO::saveToFile( graph, path ), std::runtime_error );
 	std::filesystem::remove( path );
+}
+
+TEST( JsonGraphIOTests, LoadsBundledLongLabelsGraphWithCustomDimensions ) {
+	const auto graph = JsonGraphIO::loadFromFile( paths::inputDir / "long_labels.json" );
+	const Node* node = graph.findNode( 4 );
+
+	ASSERT_NE( node, nullptr );
+	EXPECT_EQ( graph.getNodes().size(), 4U );
+	EXPECT_EQ( graph.getEdges().size(), 3U );
+	EXPECT_FLOAT_EQ( node->width, 380.0f );
+	EXPECT_FLOAT_EQ( node->height, 90.0f );
+	EXPECT_EQ( node->name, "Create Default Starter Equipment For New Character" );
 }
 
 }  // namespace task2

@@ -89,10 +89,10 @@ TEST( LayoutEngineTests, AssignsConfiguredXCoordinatesForChainLayers ) {
 	Graph graph = makeChainGraph();
 
 	LayoutEngine::Config config;
-	config.margin_x     = 25.0f;
-	config.margin_y     = 35.0f;
+	config.margin_x      = 25.0f;
+	config.margin_y      = 35.0f;
 	config.layer_spacing = 180.0f;
-	config.node_spacing = 90.0f;
+	config.node_spacing  = 90.0f;
 
 	LayoutEngine engine( config );
 	engine.applyLayout( graph );
@@ -111,6 +111,27 @@ TEST( LayoutEngineTests, AssignsConfiguredXCoordinatesForChainLayers ) {
 	EXPECT_FLOAT_EQ( n1->y, 35.0f );
 	EXPECT_FLOAT_EQ( n2->y, 35.0f );
 	EXPECT_FLOAT_EQ( n3->y, 35.0f );
+}
+
+TEST( LayoutEngineTests, RecomputesCoordinatesEvenWhenNodesAlreadyHavePositions ) {
+	Graph graph = makeChainGraph();
+	graph.findNode( 1 )->x = 900.0f;
+	graph.findNode( 1 )->y = 700.0f;
+	graph.findNode( 2 )->x = 800.0f;
+	graph.findNode( 2 )->y = 600.0f;
+
+	LayoutEngine::Config config;
+	config.margin_x      = 15.0f;
+	config.margin_y      = 25.0f;
+	config.layer_spacing = 120.0f;
+
+	LayoutEngine engine( config );
+	engine.applyLayout( graph );
+
+	EXPECT_FLOAT_EQ( graph.findNode( 1 )->x, 15.0f );
+	EXPECT_FLOAT_EQ( graph.findNode( 1 )->y, 25.0f );
+	EXPECT_FLOAT_EQ( graph.findNode( 2 )->x, 135.0f );
+	EXPECT_FLOAT_EQ( graph.findNode( 2 )->y, 25.0f );
 }
 
 TEST( LayoutEngineTests, PlacesChildrenToTheRightOfParents ) {
@@ -188,6 +209,65 @@ TEST( LayoutEngineTests, OrdersRootNodesByIdWhenTheyHaveNoIncomingEdges ) {
 	EXPECT_LT( earlierRoot->y, laterRoot->y );
 }
 
+TEST( LayoutEngineTests, OrdersNodesWithinLayerByParentBarycenter ) {
+	Graph graph;
+	graph.addNode( { .id = 1, .name = "Upper root" } );
+	graph.addNode( { .id = 2, .name = "Lower root" } );
+	graph.addNode( { .id = 3, .name = "Upper child" } );
+	graph.addNode( { .id = 4, .name = "Lower child" } );
+
+	graph.addEdge( { .from = 1, .to = 3 } );
+	graph.addEdge( { .from = 2, .to = 4 } );
+
+	LayoutEngine::Config config;
+	config.margin_y     = 10.0f;
+	config.node_spacing = 20.0f;
+
+	LayoutEngine engine( config );
+	engine.applyLayout( graph );
+
+	const Node* upperRoot  = graph.findNode( 1 );
+	const Node* lowerRoot  = graph.findNode( 2 );
+	const Node* upperChild = graph.findNode( 3 );
+	const Node* lowerChild = graph.findNode( 4 );
+	ASSERT_NE( upperRoot, nullptr );
+	ASSERT_NE( lowerRoot, nullptr );
+	ASSERT_NE( upperChild, nullptr );
+	ASSERT_NE( lowerChild, nullptr );
+
+	EXPECT_LT( upperRoot->y, lowerRoot->y );
+	EXPECT_LT( upperChild->y, lowerChild->y );
+}
+
+TEST( LayoutEngineTests, PlacesMergedNodeAfterDeepestParentLayer ) {
+	Graph graph;
+	graph.addNode( { .id = 1, .name = "Start" } );
+	graph.addNode( { .id = 2, .name = "Branch A" } );
+	graph.addNode( { .id = 3, .name = "Branch B" } );
+	graph.addNode( { .id = 4, .name = "Merge" } );
+
+	graph.addEdge( { .from = 1, .to = 2 } );
+	graph.addEdge( { .from = 2, .to = 3 } );
+	graph.addEdge( { .from = 1, .to = 4 } );
+	graph.addEdge( { .from = 3, .to = 4 } );
+
+	LayoutEngine engine;
+	engine.applyLayout( graph );
+
+	const Node* start = graph.findNode( 1 );
+	const Node* a     = graph.findNode( 2 );
+	const Node* b     = graph.findNode( 3 );
+	const Node* merge = graph.findNode( 4 );
+	ASSERT_NE( start, nullptr );
+	ASSERT_NE( a, nullptr );
+	ASSERT_NE( b, nullptr );
+	ASSERT_NE( merge, nullptr );
+
+	EXPECT_LT( start->x, a->x );
+	EXPECT_LT( a->x, b->x );
+	EXPECT_LT( b->x, merge->x );
+}
+
 TEST( LayoutEngineTests, SeparatesDisconnectedComponentsVertically ) {
 	Graph graph = makeTwoComponentGraph();
 
@@ -205,6 +285,52 @@ TEST( LayoutEngineTests, SeparatesDisconnectedComponentsVertically ) {
 	std::ranges::sort( orderedRanges, []( const auto& lhs, const auto& rhs ) { return lhs.first < rhs.first; } );
 
 	EXPECT_GE( orderedRanges[ 1 ].first - orderedRanges[ 0 ].second, config.component_spacing );
+}
+
+TEST( LayoutEngineTests, AssignsPositionsToSelfLoopComponent ) {
+	Graph graph;
+	graph.addNode( { .id = 7, .name = "Loop" } );
+	graph.addEdge( { .from = 7, .to = 7 } );
+
+	LayoutEngine::Config config;
+	config.margin_x = 30.0f;
+	config.margin_y = 45.0f;
+
+	LayoutEngine engine( config );
+	engine.applyLayout( graph );
+
+	const Node* node = graph.findNode( 7 );
+	ASSERT_NE( node, nullptr );
+	EXPECT_FLOAT_EQ( node->x, 30.0f );
+	EXPECT_FLOAT_EQ( node->y, 45.0f );
+}
+
+TEST( LayoutEngineTests, PlacesIsolatedNodesAsSeparateComponents ) {
+	Graph graph;
+	graph.addNode( { .id = 1, .name = "A" } );
+	graph.addNode( { .id = 2, .name = "B" } );
+	graph.addNode( { .id = 3, .name = "C" } );
+
+	LayoutEngine::Config config;
+	config.margin_x          = 12.0f;
+	config.margin_y          = 18.0f;
+	config.component_spacing = 25.0f;
+
+	LayoutEngine engine( config );
+	engine.applyLayout( graph );
+
+	std::vector< float > ys;
+	for ( int id : { 1, 2, 3 } ) {
+		const Node* node = graph.findNode( id );
+		ASSERT_NE( node, nullptr );
+		EXPECT_FLOAT_EQ( node->x, 12.0f );
+		ys.push_back( node->y );
+	}
+
+	std::ranges::sort( ys );
+	EXPECT_FLOAT_EQ( ys[ 0 ], 18.0f );
+	EXPECT_FLOAT_EQ( ys[ 1 ] - ys[ 0 ], 80.0f + 25.0f );
+	EXPECT_FLOAT_EQ( ys[ 2 ] - ys[ 1 ], 80.0f + 25.0f );
 }
 
 TEST( LayoutEngineTests, ProducesStableForwardLayersForCycleGraphs ) {

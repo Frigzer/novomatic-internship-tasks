@@ -44,6 +44,11 @@ std::unordered_map< int, int > computeLayersInternal( const Graph& graph, const 
 	LayoutEngine::LayerMap layer;
 	std::unordered_map< int, int > indegree;
 
+	for ( int id : component ) {
+		layer[ id ]    = 0;
+		indegree[ id ] = 0;
+	}
+
 	for ( const auto& [ from, nextNodes ] : outgoing ) {
 		for ( int to : nextNodes ) {
 			indegree[ to ]++;
@@ -236,15 +241,15 @@ void LayoutEngine::applyLayout( Graph& graph ) const {
 	for ( const auto& component : components ) {
 		applyLayoutToComponent( graph, component, currentYOffset );
 
-		float maxY = currentYOffset;
+		float maxYOffset = currentYOffset;
 		for ( int nodeId : component ) {
 			const Node* node = graph.findNode( nodeId );
 			if ( node != nullptr ) {
-				maxY = std::max( maxY, node->y + node->height );
+				maxYOffset = std::max( maxYOffset, node->y + node->height - config_.margin_y );
 			}
 		}
 
-		currentYOffset = maxY + config_.component_spacing;
+		currentYOffset = maxYOffset + config_.component_spacing;
 	}
 }
 
