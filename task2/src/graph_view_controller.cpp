@@ -73,7 +73,11 @@ void GraphViewController::fitGraph( const sf::RenderWindow& window, const Graph&
 	const float graphWidth  = std::max( 1.0f, bounds->maxX - bounds->minX );
 	const float graphHeight = std::max( 1.0f, bounds->maxY - bounds->minY );
 
-	view_.setCenter( { bounds->minX + ( graphWidth * 0.5f ), bounds->minY + ( graphHeight * 0.5f ) } );
+	view_.setCenter(
+	    { bounds->minX +
+	          ( graphWidth * 0.5f ),  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+	      bounds->minY +
+	          ( graphHeight * 0.5f ) } );  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 	view_.setSize( { graphWidth, graphHeight } );
 	resizeToWindow( window.getSize() );
 }
