@@ -1,4 +1,6 @@
 add_library(task3_lib
+    src/cli_parser.cpp
+    src/log_console_app.cpp
     src/log_parser.cpp
     src/log_store.cpp
     src/log_query_engine.cpp
@@ -25,6 +27,7 @@ target_link_libraries(task3 PRIVATE task3_lib)
 find_package(GTest REQUIRED)
 
 add_executable(task3_tests
+    tests/cli_parser_tests.cpp
     tests/log_parser_tests.cpp
     tests/log_query_engine_tests.cpp
     tests/log_store_tests.cpp
