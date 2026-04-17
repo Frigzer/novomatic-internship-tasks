@@ -2,6 +2,9 @@
 
 #include "log_query_engine.hpp"
 
+#include <chrono>
+#include <vector>
+
 namespace task3 {
 namespace {
 
@@ -30,6 +33,18 @@ std::vector< LogEntry > makeSampleEntries() {
 
 }  // namespace
 
+TEST( LogQueryEngineTests, ReturnsAllEntriesForEmptyQuery ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	const auto results = engine.execute( LogQuery{} );
+
+	ASSERT_EQ( results.size(), entries.size() );
+	for ( std::size_t i = 0; i < entries.size(); ++i ) {
+		EXPECT_EQ( results[ i ], &entries[ i ] );
+	}
+}
+
 TEST( LogQueryEngineTests, FiltersBySource ) {
 	const auto entries = makeSampleEntries();
 	LogQueryEngine engine( entries );
@@ -44,12 +59,41 @@ TEST( LogQueryEngineTests, FiltersBySource ) {
 	EXPECT_EQ( results[ 1 ]->source, "AuthService" );
 }
 
+TEST( LogQueryEngineTests, FiltersByLevelOnly ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.level = LogLevel::Error;
+
+	const auto results = engine.execute( query );
+
+	ASSERT_EQ( results.size(), 2U );
+	EXPECT_EQ( results[ 0 ]->source, "Database" );
+	EXPECT_EQ( results[ 1 ]->source, "Payment" );
+}
+
+TEST( LogQueryEngineTests, FiltersByInclusiveTimeRange ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 5, 12 ), ts( 2023, 10, 25, 10, 20, 0 ) };
+
+	const auto results = engine.execute( query );
+
+	ASSERT_EQ( results.size(), 3U );
+	EXPECT_EQ( results[ 0 ]->timestamp, ts( 2023, 10, 25, 10, 5, 12 ) );
+	EXPECT_EQ( results[ 1 ]->timestamp, ts( 2023, 10, 25, 10, 15, 30 ) );
+	EXPECT_EQ( results[ 2 ]->timestamp, ts( 2023, 10, 25, 10, 20, 0 ) );
+}
+
 TEST( LogQueryEngineTests, FiltersByLevelAndTimeRange ) {
 	const auto entries = makeSampleEntries();
 	LogQueryEngine engine( entries );
 
 	LogQuery query;
-	query.level      = LogLevel::Error;
+	query.level     = LogLevel::Error;
 	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 0, 0 ), ts( 2023, 10, 25, 10, 10, 0 ) };
 
 	const auto results = engine.execute( query );
@@ -70,6 +114,67 @@ TEST( LogQueryEngineTests, FiltersByPartialMessage ) {
 	ASSERT_EQ( results.size(), 2U );
 	EXPECT_EQ( results[ 0 ]->source, "Payment" );
 	EXPECT_EQ( results[ 1 ]->source, "Payment" );
+}
+
+TEST( LogQueryEngineTests, FiltersByCombinedCriteria ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.level           = LogLevel::Error;
+	query.source          = "Payment";
+	query.messageContains = "insufficient";
+	query.timeRange       = TimeRange{ ts( 2023, 10, 25, 10, 10, 0 ), ts( 2023, 10, 25, 10, 25, 0 ) };
+
+	const auto results = engine.execute( query );
+
+	ASSERT_EQ( results.size(), 1U );
+	EXPECT_EQ( results[ 0 ]->source, "Payment" );
+	EXPECT_EQ( results[ 0 ]->message, "Transaction rejected: insufficient funds" );
+}
+
+TEST( LogQueryEngineTests, ReturnsEmptyWhenNoEntriesMatch ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.source = "Billing";
+
+	EXPECT_TRUE( engine.execute( query ).empty() );
+}
+
+TEST( LogQueryEngineTests, SupportsExactTimestampUsingSinglePointRange ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 15, 30 ), ts( 2023, 10, 25, 10, 15, 30 ) };
+
+	const auto results = engine.execute( query );
+
+	ASSERT_EQ( results.size(), 1U );
+	EXPECT_EQ( results[ 0 ]->source, "AuthService" );
+	EXPECT_EQ( results[ 0 ]->message, "Multiple failed login attempts" );
+}
+
+TEST( LogQueryEngineTests, ReturnsEmptyForReversedTimeRange ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 30, 0 ), ts( 2023, 10, 25, 10, 0, 0 ) };
+
+	EXPECT_TRUE( engine.execute( query ).empty() );
+}
+
+TEST( LogQueryEngineTests, PartialMessageMatchIsCaseSensitive ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.messageContains = "transaction";
+
+	EXPECT_TRUE( engine.execute( query ).empty() );
 }
 
 }  // namespace task3
