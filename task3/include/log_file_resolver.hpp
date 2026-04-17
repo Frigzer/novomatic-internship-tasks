@@ -20,7 +20,8 @@ private:
 	[[nodiscard]] static bool exists( const std::filesystem::path& candidate ) noexcept;
 	[[nodiscard]] static std::filesystem::path normalized( const std::filesystem::path& candidate );
 	[[nodiscard]] static bool isPlainFilename( const std::filesystem::path& input ) noexcept;
-	static void appendCandidate( std::vector< std::filesystem::path >& candidates, const std::filesystem::path& candidate );
+	static void appendCandidate( std::vector< std::filesystem::path >& candidates,
+	                             const std::filesystem::path& candidate );
 };
 
 }  // namespace task3

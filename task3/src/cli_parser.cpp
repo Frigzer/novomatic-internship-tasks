@@ -116,7 +116,7 @@ CliParseResult CliParser::parse( std::span< const std::string > args ) const {
 		}
 
 		if ( exactTimestamp.has_value() ) {
-			options.query.timeRange = TimeRange{ *exactTimestamp, *exactTimestamp };
+			options.query.timeRange = TimeRange{ .from = *exactTimestamp, .to = *exactTimestamp };
 		} else if ( from.has_value() || to.has_value() ) {
 			if ( !from.has_value() || !to.has_value() ) {
 				throw std::runtime_error( "Both --from and --to must be provided together." );
@@ -124,7 +124,7 @@ CliParseResult CliParser::parse( std::span< const std::string > args ) const {
 			if ( *from > *to ) {
 				throw std::runtime_error( "Invalid time range: --from must be earlier than or equal to --to." );
 			}
-			options.query.timeRange = TimeRange{ *from, *to };
+			options.query.timeRange = TimeRange{ .from = *from, .to = *to };
 		}
 
 		result.mode    = CliMode::Execute;
