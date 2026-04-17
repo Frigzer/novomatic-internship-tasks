@@ -78,28 +78,22 @@ TEST( LogParserTests, TrimsTrailingCarriageReturn ) {
 	EXPECT_EQ( parsed->raw_line, "[2023-10-25T10:05:12] [ERROR] [Database] Connection timeout" );
 }
 
-TEST( LogParserTests, ReturnsNulloptForInvalidFormat ) {
+TEST( LogParserTests, ThrowsForInvalidFormat ) {
 	const std::string line = "invalid log line";
 
-	auto parsed = LogParser::parseLine( line );
-
-	EXPECT_FALSE( parsed.has_value() );
+	EXPECT_THROW( static_cast< void >( LogParser::parseLine( line ) ), std::runtime_error );
 }
 
-TEST( LogParserTests, ReturnsNulloptWhenMessageIsMissing ) {
+TEST( LogParserTests, ThrowsWhenMessageIsMissing ) {
 	const std::string line = "[2023-10-25T10:05:12] [ERROR] [Database]";
 
-	auto parsed = LogParser::parseLine( line );
-
-	EXPECT_FALSE( parsed.has_value() );
+	EXPECT_THROW( static_cast< void >( LogParser::parseLine( line ) ), std::runtime_error );
 }
 
-TEST( LogParserTests, ReturnsNulloptWhenBracketedSectionIsMissing ) {
+TEST( LogParserTests, ThrowsWhenBracketedSectionIsMissing ) {
 	const std::string line = "[2023-10-25T10:05:12] [ERROR] Database Connection timeout";
 
-	auto parsed = LogParser::parseLine( line );
-
-	EXPECT_FALSE( parsed.has_value() );
+	EXPECT_THROW( static_cast< void >( LogParser::parseLine( line ) ), std::runtime_error );
 }
 
 TEST( LogParserTests, ThrowsForInvalidCalendarDate ) {

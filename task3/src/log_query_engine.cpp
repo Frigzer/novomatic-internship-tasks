@@ -1,7 +1,9 @@
 #include "log_query_engine.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <limits>
+#include <string_view>
 
 namespace task3 {
 namespace {
@@ -20,6 +22,19 @@ struct EntryPtrTimestampLess {
 	}
 };
 
+[[nodiscard]] bool iequals( char lhs, char rhs ) noexcept {
+	return std::tolower( static_cast< unsigned char >( lhs ) ) == std::tolower( static_cast< unsigned char >( rhs ) );
+}
+
+[[nodiscard]] bool containsCaseInsensitive( std::string_view text, std::string_view needle ) noexcept {
+	if ( needle.empty() ) {
+		return true;
+	}
+
+	const auto it = std::search( text.begin(), text.end(), needle.begin(), needle.end(), iequals );
+	return it != text.end();
+}
+
 }  // namespace
 
 LogQueryEngine::LogQueryEngine( std::span< const LogEntry > entries ) : entries_( entries ) {
@@ -31,7 +46,7 @@ LogQueryEngine::LogQueryEngine( std::span< const LogEntry > entries ) : entries_
 		bySource_[ entry.source ].push_back( ptr );
 	}
 
-	std::ranges::sort( orderedByTimestamp_, EntryPtrTimestampLess{} );
+	std::ranges::stable_sort( orderedByTimestamp_, EntryPtrTimestampLess{} );
 }
 
 std::vector< const LogEntry* > LogQueryEngine::execute( const LogQuery& query ) const {
@@ -77,7 +92,7 @@ std::vector< const LogEntry* > LogQueryEngine::execute( const LogQuery& query ) 
 				results.push_back( entry );
 			}
 		}
-		std::ranges::sort( results, EntryPtrTimestampLess{} );
+		std::ranges::stable_sort( results, EntryPtrTimestampLess{} );
 		return results;
 	}
 
@@ -100,7 +115,7 @@ bool LogQueryEngine::matches( const LogEntry& entry, const LogQuery& query ) con
 		return false;
 	}
 
-	if ( query.messageContains.has_value() && entry.message.find( *query.messageContains ) == std::string::npos ) {
+	if ( query.messageContains.has_value() && !containsCaseInsensitive( entry.message, *query.messageContains ) ) {
 		return false;
 	}
 

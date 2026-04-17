@@ -176,14 +176,18 @@ TEST( LogQueryEngineTests, ReturnsEmptyForReversedTimeRange ) {
 	EXPECT_TRUE( engine.execute( query ).empty() );
 }
 
-TEST( LogQueryEngineTests, PartialMessageMatchIsCaseSensitive ) {
+TEST( LogQueryEngineTests, PartialMessageMatchIsCaseInsensitive ) {
 	const auto entries = makeSampleEntries();
 	LogQueryEngine engine( entries );
 
 	LogQuery query;
 	query.messageContains = "transaction";
 
-	EXPECT_TRUE( engine.execute( query ).empty() );
+	const auto results = engine.execute( query );
+
+	ASSERT_EQ( results.size(), 2U );
+	EXPECT_EQ( results[ 0 ]->source, "Payment" );
+	EXPECT_EQ( results[ 1 ]->source, "Payment" );
 }
 
 TEST( LogQueryEngineTests, SupportsUnsortedInputWithoutMissingTimeRangeResults ) {
@@ -198,6 +202,45 @@ TEST( LogQueryEngineTests, SupportsUnsortedInputWithoutMissingTimeRangeResults )
 	ASSERT_EQ( results.size(), 2U );
 	EXPECT_EQ( results[ 0 ]->message, "First" );
 	EXPECT_EQ( results[ 1 ]->message, "Second" );
+}
+
+TEST( LogQueryEngineTests, PreservesOriginalOrderForEqualTimestamps ) {
+	std::vector< LogEntry > entries{
+	    { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Error, "A", "alpha", "[2023-10-25T10:00:00] [ERROR] [A] alpha" },
+	    { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Info, "B", "beta", "[2023-10-25T10:00:00] [INFO] [B] beta" },
+	    { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Warn, "C", "gamma", "[2023-10-25T10:00:00] [WARN] [C] gamma" } };
+
+	LogQueryEngine engine( entries );
+	const auto results = engine.execute( LogQuery{} );
+
+	ASSERT_EQ( results.size(), 3U );
+	EXPECT_EQ( results[ 0 ]->source, "A" );
+	EXPECT_EQ( results[ 1 ]->source, "B" );
+	EXPECT_EQ( results[ 2 ]->source, "C" );
+}
+
+TEST( LogQueryEngineTests, PreservesOriginalOrderForEqualTimestampsAfterIndexedFiltering ) {
+	std::vector< LogEntry > entries{ { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Error, "Auth", "first timeout",
+	                                   "[2023-10-25T10:00:00] [ERROR] [Auth] first timeout" },
+	                                 { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Error, "Billing", "second timeout",
+	                                   "[2023-10-25T10:00:00] [ERROR] [Billing] second timeout" },
+	                                 { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Error, "Cache", "third timeout",
+	                                   "[2023-10-25T10:00:00] [ERROR] [Cache] third timeout" },
+	                                 { ts( 2023, 10, 25, 10, 1, 0 ), LogLevel::Info, "Other", "later",
+	                                   "[2023-10-25T10:01:00] [INFO] [Other] later" } };
+
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.level           = LogLevel::Error;
+	query.messageContains = "TIMEOUT";
+
+	const auto results = engine.execute( query );
+
+	ASSERT_EQ( results.size(), 3U );
+	EXPECT_EQ( results[ 0 ]->source, "Auth" );
+	EXPECT_EQ( results[ 1 ]->source, "Billing" );
+	EXPECT_EQ( results[ 2 ]->source, "Cache" );
 }
 
 }  // namespace task3

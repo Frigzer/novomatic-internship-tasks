@@ -9,8 +9,8 @@ namespace task3 {
 void LogStore::loadFromFile( const std::filesystem::path& path ) {
 	entries_ = LogParser::parseFile( path );
 
-	std::ranges::sort( entries_,
-	                   []( const LogEntry& lhs, const LogEntry& rhs ) { return lhs.timestamp < rhs.timestamp; } );
+	std::ranges::stable_sort(
+	    entries_, []( const LogEntry& lhs, const LogEntry& rhs ) { return lhs.timestamp < rhs.timestamp; } );
 }
 
 const std::vector< LogEntry >& LogStore::entries() const noexcept {

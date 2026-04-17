@@ -96,5 +96,12 @@ TEST( CliParserTests, UsageDoesNotMentionInteractiveMode ) {
 	EXPECT_EQ( usage.find( "Without arguments" ), std::string::npos );
 }
 
+TEST( CliParserTests, UsageMentionsCaseInsensitiveMessageMatching ) {
+	CliParser parser;
+	const std::string usage = parser.usage( "task3" );
+
+	EXPECT_NE( usage.find( "--message <substring>" ), std::string::npos );
+}
+
 }  // namespace
 }  // namespace task3

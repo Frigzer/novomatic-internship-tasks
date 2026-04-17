@@ -88,4 +88,19 @@ TEST( LogStoreTests, LoadFromFilePropagatesOpenFailure ) {
 	EXPECT_THROW( static_cast< void >( store.loadFromFile( missingPath ) ), std::runtime_error );
 }
 
+TEST( LogStoreTests, LoadFromFilePreservesInputOrderForEqualTimestamps ) {
+	ScopedTempFile file( "[2023-10-25T10:00:00] [INFO] [AuthService] First\n"
+	                     "[2023-10-25T10:00:00] [ERROR] [Database] Second\n"
+	                     "[2023-10-25T10:00:00] [WARN] [Payment] Third\n" );
+
+	LogStore store;
+	store.loadFromFile( file.path() );
+
+	const auto& entries = store.entries();
+	ASSERT_EQ( entries.size(), 3U );
+	EXPECT_EQ( entries[ 0 ].message, "First" );
+	EXPECT_EQ( entries[ 1 ].message, "Second" );
+	EXPECT_EQ( entries[ 2 ].message, "Third" );
+}
+
 }  // namespace task3

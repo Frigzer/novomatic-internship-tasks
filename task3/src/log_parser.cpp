@@ -126,20 +126,27 @@ std::optional< LogEntry > LogParser::parseLine( std::string_view line ) {
 	std::size_t pos = 0;
 
 	const auto timestampToken = extractBracketedToken( line, pos );
-	const auto levelToken     = extractBracketedToken( line, pos );
-	const auto sourceToken    = extractBracketedToken( line, pos );
+	if ( !timestampToken.has_value() ) {
+		throw std::runtime_error( "Invalid log line format: missing [TIMESTAMP] field" );
+	}
 
-	if ( !timestampToken.has_value() || !levelToken.has_value() || !sourceToken.has_value() ) {
-		return std::nullopt;
+	const auto levelToken = extractBracketedToken( line, pos );
+	if ( !levelToken.has_value() ) {
+		throw std::runtime_error( "Invalid log line format: missing [LOG_LEVEL] field" );
+	}
+
+	const auto sourceToken = extractBracketedToken( line, pos );
+	if ( !sourceToken.has_value() ) {
+		throw std::runtime_error( "Invalid log line format: missing [SOURCE] field" );
 	}
 
 	if ( pos > line.size() ) {
-		return std::nullopt;
+		throw std::runtime_error( "Invalid log line format: malformed message section" );
 	}
 
 	const std::string_view messageView = line.substr( pos );
 	if ( trimView( messageView ).empty() ) {
-		return std::nullopt;
+		throw std::runtime_error( "Invalid log line format: missing message content" );
 	}
 
 	LogEntry entry;
