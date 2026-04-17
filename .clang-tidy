@@ -24,7 +24,6 @@ Checks: >
   -readability-identifier-length,
   -readability-uppercase-literal-suffix,
   -readability-braces-around-statements,
-  -modernize-use-nodiscard,
   misc-*,
   -misc-non-private-member-variables-in-classes
 
