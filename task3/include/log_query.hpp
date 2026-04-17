@@ -18,6 +18,7 @@ struct LogQuery {
 	std::optional< std::string > source;
 	std::optional< std::string > messageContains;
 	std::optional< TimeRange > timeRange;
+	bool messageCaseSensitive = false;
 };
 
 }  // namespace task3

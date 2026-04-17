@@ -56,6 +56,29 @@ TEST( CliParserTests, ParsesExactTimestampIntoSinglePointTimeRange ) {
 	EXPECT_EQ( result.options.query.timeRange->from, result.options.query.timeRange->to );
 }
 
+
+TEST( CliParserTests, EnablesCaseSensitiveMessageSearch ) {
+	CliParser parser;
+	const std::vector< std::string > args{ "task3", "logs.txt", "--message", "Timeout", "--case-sensitive" };
+
+	const auto result = parser.parse( args );
+
+	ASSERT_EQ( result.mode, CliMode::Execute );
+	ASSERT_TRUE( result.options.query.messageContains.has_value() );
+	EXPECT_EQ( *result.options.query.messageContains, "Timeout" );
+	EXPECT_TRUE( result.options.query.messageCaseSensitive );
+}
+
+TEST( CliParserTests, ReturnsErrorWhenCaseSensitiveIsUsedWithoutMessage ) {
+	CliParser parser;
+	const std::vector< std::string > args{ "task3", "logs.txt", "--case-sensitive" };
+
+	const auto result = parser.parse( args );
+
+	EXPECT_EQ( result.mode, CliMode::Error );
+	EXPECT_NE( result.message.find( "requires --message" ), std::string::npos );
+}
+
 TEST( CliParserTests, ReturnsErrorForUnknownOption ) {
 	CliParser parser;
 	const std::vector< std::string > args{ "task3", "logs.txt", "--unknown" };
@@ -100,7 +123,8 @@ TEST( CliParserTests, UsageMentionsCaseInsensitiveMessageMatching ) {
 	CliParser parser;
 	const std::string usage = parser.usage( "task3" );
 
-	EXPECT_NE( usage.find( "--message <substring>" ), std::string::npos );
+	EXPECT_NE( usage.find( "Case-insensitive by default" ), std::string::npos );
+	EXPECT_NE( usage.find( "--case-sensitive" ), std::string::npos );
 }
 
 }  // namespace

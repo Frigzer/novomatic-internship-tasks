@@ -4,6 +4,7 @@
 #include "log_store.hpp"
 
 #include <exception>
+#include <sstream>
 #include <string_view>
 #include <vector>
 
@@ -26,10 +27,28 @@ void LogConsoleApp::printEntries( std::ostream& out, std::span< const LogEntry* 
 	}
 }
 
+std::string LogConsoleApp::buildMissingFileMessage( const FileResolutionResult& resolution,
+                                                    const std::filesystem::path& requestedPath ) const {
+	std::ostringstream message;
+	message << "Could not find log file '" << requestedPath.string() << "'.";
+
+	if ( !resolution.attempted.empty() ) {
+		message << " Tried:";
+		for ( const auto& candidate : resolution.attempted ) {
+			message << "\n  - " << candidate.string();
+		}
+	}
+
+	return message.str();
+}
+
 int LogConsoleApp::execute( const CliOptions& options ) {
 	LogStore store;
-	const std::filesystem::path resolvedLogFile = fileResolver_.resolve( options.logFile );
-	store.loadFromFile( resolvedLogFile );
+	const FileResolutionResult resolution = fileResolver_.resolveDetailed( options.logFile );
+	if ( !resolution.exists ) {
+		throw std::runtime_error( buildMissingFileMessage( resolution, options.logFile ) );
+	}
+	store.loadFromFile( resolution.resolved );
 
 	LogQueryEngine engine( store.view() );
 	const auto results = engine.execute( options.query );

@@ -96,6 +96,26 @@ TEST( LogFileResolverTests, PrefersCurrentWorkingDirectoryDataOverProjectData ) 
 	std::filesystem::remove_all( tempDir );
 }
 
+TEST( LogFileResolverTests, DetailedResolutionReportsTriedCandidatesForMissingFile ) {
+	const std::filesystem::path tempDir = std::filesystem::temp_directory_path() / "task3_resolver_missing_report";
+	std::filesystem::remove_all( tempDir );
+	std::filesystem::create_directories( tempDir );
+
+	{
+		CurrentPathGuard guard;
+		std::filesystem::current_path( tempDir );
+
+		LogFileResolver resolver;
+		const FileResolutionResult result = resolver.resolveDetailed( "does_not_exist.txt" );
+
+		EXPECT_FALSE( result.exists );
+		EXPECT_FALSE( result.attempted.empty() );
+		EXPECT_EQ( result.attempted.front(), std::filesystem::weakly_canonical( tempDir / "does_not_exist.txt" ) );
+	}
+
+	std::filesystem::remove_all( tempDir );
+}
+
 TEST( CliParserTests, UsageMentionsConvenientDataLookup ) {
 	CliParser parser;
 	const std::string usage = parser.usage( "task3" );

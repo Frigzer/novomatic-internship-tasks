@@ -43,6 +43,7 @@ add_executable(task3_tests
     tests/log_parser_tests.cpp
     tests/log_query_engine_tests.cpp
     tests/log_store_tests.cpp
+    tests/log_console_app_tests.cpp
 )
 
 target_link_libraries(task3_tests

@@ -35,6 +35,10 @@ struct EntryPtrTimestampLess {
 	return it != text.end();
 }
 
+[[nodiscard]] bool containsCaseSensitive( std::string_view text, std::string_view needle ) noexcept {
+	return text.find( needle ) != std::string_view::npos;
+}
+
 }  // namespace
 
 LogQueryEngine::LogQueryEngine( std::span< const LogEntry > entries ) : entries_( entries ) {
@@ -115,8 +119,13 @@ bool LogQueryEngine::matches( const LogEntry& entry, const LogQuery& query ) con
 		return false;
 	}
 
-	if ( query.messageContains.has_value() && !containsCaseInsensitive( entry.message, *query.messageContains ) ) {
-		return false;
+	if ( query.messageContains.has_value() ) {
+		const bool contains = query.messageCaseSensitive
+		                          ? containsCaseSensitive( entry.message, *query.messageContains )
+		                          : containsCaseInsensitive( entry.message, *query.messageContains );
+		if ( !contains ) {
+			return false;
+		}
 	}
 
 	if ( query.timeRange.has_value() &&

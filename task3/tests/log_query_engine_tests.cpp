@@ -190,6 +190,33 @@ TEST( LogQueryEngineTests, PartialMessageMatchIsCaseInsensitive ) {
 	EXPECT_EQ( results[ 1 ]->source, "Payment" );
 }
 
+
+TEST( LogQueryEngineTests, CanUseCaseSensitiveMessageMatchingWhenRequested ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.messageContains     = "transaction";
+	query.messageCaseSensitive = true;
+
+	const auto results = engine.execute( query );
+
+	EXPECT_TRUE( results.empty() );
+}
+
+TEST( LogQueryEngineTests, CaseSensitiveMessageMatchingStillFindsExactCasing ) {
+	const auto entries = makeSampleEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.messageContains      = "Transaction";
+	query.messageCaseSensitive = true;
+
+	const auto results = engine.execute( query );
+
+	ASSERT_EQ( results.size(), 2U );
+}
+
 TEST( LogQueryEngineTests, SupportsUnsortedInputWithoutMissingTimeRangeResults ) {
 	const auto entries = makeUnsortedEntries();
 	LogQueryEngine engine( entries );

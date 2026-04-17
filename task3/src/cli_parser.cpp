@@ -19,7 +19,8 @@ std::string CliParser::usage( std::string_view executableName ) const {
 	text += "Options:\n";
 	text += "  --level <TRACE|DEBUG|INFO|WARN|ERROR|FATAL>\n";
 	text += "  --source <source>\n";
-	text += "  --message <substring>\n";
+	text += "  --message <substring>                 Case-insensitive by default\n";
+	text += "  --case-sensitive                      Make --message matching case-sensitive\n";
 	text += "  --from <YYYY-MM-DDTHH:MM:SS>\n";
 	text += "  --to <YYYY-MM-DDTHH:MM:SS>\n";
 	text += "  --timestamp <YYYY-MM-DDTHH:MM:SS>   Exact timestamp match\n";
@@ -35,6 +36,9 @@ std::string CliParser::usage( std::string_view executableName ) const {
 	text += "  ";
 	text += executableName;
 	text += " sample_logs.txt --message Transaction\n";
+	text += "  ";
+	text += executableName;
+	text += " sample_logs.txt --message Timeout --case-sensitive\n";
 	return text;
 }
 
@@ -84,6 +88,8 @@ CliParseResult CliParser::parse( std::span< const std::string > args ) const {
 				options.query.source = requireValue( args, index, arg );
 			} else if ( arg == "--message" ) {
 				options.query.messageContains = requireValue( args, index, arg );
+			} else if ( arg == "--case-sensitive" ) {
+				options.query.messageCaseSensitive = true;
 			} else if ( arg == "--from" ) {
 				from = LogParser::parseTimestamp( requireValue( args, index, arg ) );
 			} else if ( arg == "--to" ) {
@@ -99,6 +105,10 @@ CliParseResult CliParser::parse( std::span< const std::string > args ) const {
 
 		if ( options.logFile.empty() ) {
 			throw std::runtime_error( "Missing log file path." );
+		}
+
+		if ( options.query.messageCaseSensitive && !options.query.messageContains.has_value() ) {
+			throw std::runtime_error( "Option --case-sensitive requires --message." );
 		}
 
 		if ( exactTimestamp.has_value() && ( from.has_value() || to.has_value() ) ) {
