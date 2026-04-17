@@ -8,13 +8,14 @@
 namespace task3 {
 namespace {
 
-TEST( CliParserTests, ReturnsInteractiveModeWhenNoArgumentsAreProvided ) {
+TEST( CliParserTests, ReturnsErrorWhenNoArgumentsAreProvided ) {
 	CliParser parser;
 	const std::vector< std::string > args{ "task3" };
 
 	const auto result = parser.parse( args );
 
-	EXPECT_EQ( result.mode, CliMode::Interactive );
+	EXPECT_EQ( result.mode, CliMode::Error );
+	EXPECT_NE( result.message.find( "Missing log file path" ), std::string::npos );
 }
 
 TEST( CliParserTests, ReturnsHelpModeWhenHelpOptionIsProvided ) {
@@ -85,6 +86,14 @@ TEST( CliParserTests, UsageContainsSourceOptionOnlyOnce ) {
 	const auto first         = usage.find( needle );
 	ASSERT_NE( first, std::string::npos );
 	EXPECT_EQ( usage.find( needle, first + 1 ), std::string::npos );
+}
+
+TEST( CliParserTests, UsageDoesNotMentionInteractiveMode ) {
+	CliParser parser;
+	const std::string usage = parser.usage( "task3" );
+
+	EXPECT_EQ( usage.find( "interactive terminal mode" ), std::string::npos );
+	EXPECT_EQ( usage.find( "Without arguments" ), std::string::npos );
 }
 
 }  // namespace

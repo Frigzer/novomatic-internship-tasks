@@ -8,7 +8,7 @@
 
 namespace task3 {
 
-enum class CliMode { Execute, Interactive, ShowHelp, Error };
+enum class CliMode : std::uint8_t { Execute, ShowHelp, Error };
 
 struct CliParseResult {
 	CliMode mode = CliMode::Error;

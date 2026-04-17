@@ -12,15 +12,10 @@ std::string CliParser::usage( std::string_view executableName ) const {
 	text += "Usage:\n";
 	text += "  ";
 	text += executableName;
-	text += " <log-file> [options]\n";
-	text += "  ";
-	text += executableName;
-	text += "\n\n";
+	text += " <log-file> [options]\n\n";
 	text += "The log file may be an absolute path, a relative path, 'data/<file>', or just a file name\n";
-	text += "when the file exists in the project's data directory.\n\n";
-	text += "Modes:\n";
-	text += "  With arguments: one-shot CLI query execution\n";
-	text += "  Without arguments: interactive terminal mode\n\n";
+	text += "when the file exists in the current directory, the current data/ directory, or the project's data "
+	        "directory.\n\n";
 	text += "Options:\n";
 	text += "  --level <TRACE|DEBUG|INFO|WARN|ERROR|FATAL>\n";
 	text += "  --source <source>\n";
@@ -33,13 +28,13 @@ std::string CliParser::usage( std::string_view executableName ) const {
 	text += "Examples:\n";
 	text += "  ";
 	text += executableName;
-	text += " logs.txt --source AuthService\n";
+	text += " sample_logs.txt --source AuthService\n";
 	text += "  ";
 	text += executableName;
-	text += " logs.txt --level ERROR --from 2023-10-25T10:00:00 --to 2023-10-25T10:10:00\n";
+	text += " data/sample_logs.txt --level ERROR --from 2023-10-25T10:00:00 --to 2023-10-25T10:10:00\n";
 	text += "  ";
 	text += executableName;
-	text += " logs.txt --message Transaction\n";
+	text += " sample_logs.txt --message Transaction\n";
 	return text;
 }
 
@@ -55,7 +50,8 @@ CliParseResult CliParser::parse( std::span< const std::string > args ) const {
 	CliParseResult result;
 
 	if ( args.size() <= 1 ) {
-		result.mode = CliMode::Interactive;
+		result.mode    = CliMode::Error;
+		result.message = "Missing log file path.";
 		return result;
 	}
 
