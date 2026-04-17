@@ -9,12 +9,12 @@ namespace task3 {
 
 class LogStore {
 public:
-	void loadFromFile( const std::filesystem::path& path );
+    void loadFromFile( const std::filesystem::path& path );
 
-	const std::vector< LogEntry >& entries() const;
+    [[nodiscard]] const std::vector< LogEntry >& entries() const noexcept;
 
 private:
-	std::vector< LogEntry > entries_;
+    std::vector< LogEntry > entries_;
 };
 
 }  // namespace task3

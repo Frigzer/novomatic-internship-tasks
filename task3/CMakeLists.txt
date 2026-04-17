@@ -1,7 +1,7 @@
 add_library(task3_lib
     src/log_parser.cpp
     src/log_store.cpp
-    src/log_quey_engine.cpp
+    src/log_query_engine.cpp
 )
 
 target_include_directories(task3_lib

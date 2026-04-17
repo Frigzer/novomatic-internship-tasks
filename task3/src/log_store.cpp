@@ -7,14 +7,12 @@
 namespace task3 {
 
 void LogStore::loadFromFile( const std::filesystem::path& path ) {
-	entries_ = LogParser::parseFile( path );
-
-	std::ranges::sort( entries_,
-	                   []( const LogEntry& lhs, const LogEntry& rhs ) { return lhs.timestamp < rhs.timestamp; } );
+    entries_ = LogParser::parseFile( path );
+    std::ranges::sort( entries_, {}, &LogEntry::timestamp );
 }
 
-const std::vector< LogEntry >& LogStore::entries() const {
-	return entries_;
+const std::vector< LogEntry >& LogStore::entries() const noexcept {
+    return entries_;
 }
 
 }  // namespace task3

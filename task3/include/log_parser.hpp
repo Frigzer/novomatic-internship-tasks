@@ -5,17 +5,18 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace task3 {
 
 class LogParser {
 public:
-	static std::optional< LogEntry > parseLine( const std::string& line );
-	static std::vector< LogEntry > parseFile( const std::filesystem::path& path );
+    [[nodiscard]] static std::optional< LogEntry > parseLine( const std::string& line );
+    [[nodiscard]] static std::vector< LogEntry > parseFile( const std::filesystem::path& path );
 
 private:
-	static std::chrono::sys_seconds parseTimestamp( const std::string& text );
+    [[nodiscard]] static std::chrono::sys_seconds parseTimestamp( std::string_view text );
 };
 
 }  // namespace task3
