@@ -1,5 +1,6 @@
 #include "log_console_app.hpp"
 
+#include "log_file_resolver.hpp"
 #include "log_parser.hpp"
 #include "log_query_engine.hpp"
 #include "log_store.hpp"
@@ -95,7 +96,8 @@ std::optional< LogLevel > LogConsoleApp::promptOptionalLogLevel( std::string_vie
 
 int LogConsoleApp::execute( const CliOptions& options ) {
 	LogStore store;
-	store.loadFromFile( options.logFile );
+	const std::filesystem::path resolvedLogFile = fileResolver_.resolve( options.logFile );
+	store.loadFromFile( resolvedLogFile );
 
 	LogQueryEngine engine( store.view() );
 	const auto results = engine.execute( options.query );
@@ -112,6 +114,7 @@ int LogConsoleApp::execute( const CliOptions& options ) {
 int LogConsoleApp::runInteractive( std::string_view executableName ) {
 	output_ << "Advanced Log Analyzer\n";
 	output_ << "Press Enter to leave an optional field empty.\n";
+	output_ << "You can enter an absolute path, a relative path, 'data/file.txt', or just a file name if it exists in data/.\n";
 	output_ << "Type 'help' as the log file path to see the CLI usage.\n\n";
 
 	CliOptions options;

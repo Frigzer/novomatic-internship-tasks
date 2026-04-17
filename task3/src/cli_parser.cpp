@@ -16,6 +16,8 @@ std::string CliParser::usage( std::string_view executableName ) const {
 	text += "  ";
 	text += executableName;
 	text += "\n\n";
+	text += "The log file may be an absolute path, a relative path, 'data/<file>', or just a file name\n";
+	text += "when the file exists in the project's data directory.\n\n";
 	text += "Modes:\n";
 	text += "  With arguments: one-shot CLI query execution\n";
 	text += "  Without arguments: interactive terminal mode\n\n";

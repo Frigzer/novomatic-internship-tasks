@@ -6,6 +6,7 @@
 
 #include "cli_options.hpp"
 #include "cli_parser.hpp"
+#include "log_file_resolver.hpp"
 
 #include <istream>
 #include <ostream>
@@ -38,6 +39,7 @@ private:
 	std::ostream& output_;
 	std::ostream& error_;
 	CliParser parser_;
+	LogFileResolver fileResolver_;
 };
 
 }  // namespace task3
