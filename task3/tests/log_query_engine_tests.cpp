@@ -31,6 +31,15 @@ std::vector< LogEntry > makeSampleEntries() {
 	           "[2023-10-25T10:25:00] [INFO] [Payment] Transaction 12345 processed" } };
 }
 
+std::vector< LogEntry > makeUnsortedEntries() {
+	return { { ts( 2023, 10, 25, 10, 20, 0 ), LogLevel::Error, "Payment", "Third",
+	           "[2023-10-25T10:20:00] [ERROR] [Payment] Third" },
+	         { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Info, "AuthService", "First",
+	           "[2023-10-25T10:00:00] [INFO] [AuthService] First" },
+	         { ts( 2023, 10, 25, 10, 5, 12 ), LogLevel::Error, "Database", "Second",
+	           "[2023-10-25T10:05:12] [ERROR] [Database] Second" } };
+}
+
 }  // namespace
 
 TEST( LogQueryEngineTests, ReturnsAllEntriesForEmptyQuery ) {
@@ -175,6 +184,20 @@ TEST( LogQueryEngineTests, PartialMessageMatchIsCaseSensitive ) {
 	query.messageContains = "transaction";
 
 	EXPECT_TRUE( engine.execute( query ).empty() );
+}
+
+TEST( LogQueryEngineTests, SupportsUnsortedInputWithoutMissingTimeRangeResults ) {
+	const auto entries = makeUnsortedEntries();
+	LogQueryEngine engine( entries );
+
+	LogQuery query;
+	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 0, 0 ), ts( 2023, 10, 25, 10, 5, 12 ) };
+
+	const auto results = engine.execute( query );
+
+	ASSERT_EQ( results.size(), 2U );
+	EXPECT_EQ( results[ 0 ]->message, "First" );
+	EXPECT_EQ( results[ 1 ]->message, "Second" );
 }
 
 }  // namespace task3

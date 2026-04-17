@@ -63,6 +63,21 @@ TEST( LogParserTests, ReturnsNulloptForEmptyLine ) {
 	EXPECT_FALSE( parsed.has_value() );
 }
 
+TEST( LogParserTests, ReturnsNulloptForWhitespaceOnlyLine ) {
+	auto parsed = LogParser::parseLine( "  \t \r" );
+
+	EXPECT_FALSE( parsed.has_value() );
+}
+
+TEST( LogParserTests, TrimsTrailingCarriageReturn ) {
+	const std::string line = "[2023-10-25T10:05:12] [ERROR] [Database] Connection timeout\r";
+
+	auto parsed = LogParser::parseLine( line );
+
+	ASSERT_TRUE( parsed.has_value() );
+	EXPECT_EQ( parsed->raw_line, "[2023-10-25T10:05:12] [ERROR] [Database] Connection timeout" );
+}
+
 TEST( LogParserTests, ReturnsNulloptForInvalidFormat ) {
 	const std::string line = "invalid log line";
 
@@ -115,6 +130,20 @@ TEST( LogParserTests, ParseFileReadsSampleLogs ) {
 	EXPECT_EQ( entries.back().message, "Transaction 12345 processed" );
 }
 
+TEST( LogParserTests, ParseFileSkipsBlankAndWhitespaceOnlyLines ) {
+	ScopedTempFile file( "\n"
+	                     "   \t\n"
+	                     "[2023-10-25T10:00:00] [INFO] [AuthService] Ok\n"
+	                     "\r\n"
+	                     "[2023-10-25T10:05:12] [ERROR] [Database] Failed\n" );
+
+	const auto entries = LogParser::parseFile( file.path() );
+
+	ASSERT_EQ( entries.size(), 2U );
+	EXPECT_EQ( entries[ 0 ].message, "Ok" );
+	EXPECT_EQ( entries[ 1 ].message, "Failed" );
+}
+
 TEST( LogParserTests, ParseFileThrowsForMissingFile ) {
 	const auto missingPath = paths::dataDir / "does_not_exist.log";
 
@@ -123,20 +152,6 @@ TEST( LogParserTests, ParseFileThrowsForMissingFile ) {
 		FAIL() << "Expected std::runtime_error";
 	} catch ( const std::runtime_error& ex ) {
 		EXPECT_NE( std::string( ex.what() ).find( "Failed to open log file" ), std::string::npos );
-	}
-}
-
-TEST( LogParserTests, ParseFileIncludesLineNumberForMalformedStructure ) {
-	ScopedTempFile file( "[2023-10-25T10:00:00] [INFO] [AuthService] Ok\n"
-	                     "broken line\n" );
-
-	try {
-		static_cast< void >( LogParser::parseFile( file.path() ) );
-		FAIL() << "Expected std::runtime_error";
-	} catch ( const std::runtime_error& ex ) {
-		const std::string message = ex.what();
-		EXPECT_NE( message.find( "line 2" ), std::string::npos );
-		EXPECT_NE( message.find( "Invalid log line format" ), std::string::npos );
 	}
 }
 

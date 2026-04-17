@@ -70,6 +70,17 @@ TEST( LogStoreTests, LoadFromFileSortsEntriesByTimestamp ) {
 	EXPECT_EQ( entries[ 2 ].message, "Third" );
 }
 
+TEST( LogStoreTests, ViewReturnsEntriesAsSpan ) {
+	LogStore store;
+	store.loadFromFile( paths::dataDir / "sample_logs.txt" );
+
+	const std::span< const LogEntry > view = store.view();
+
+	ASSERT_EQ( view.size(), 5U );
+	EXPECT_EQ( view.front().source, "AuthService" );
+	EXPECT_EQ( view.back().source, "Payment" );
+}
+
 TEST( LogStoreTests, LoadFromFilePropagatesOpenFailure ) {
 	LogStore store;
 	const auto missingPath = paths::dataDir / "missing_store_input.log";
