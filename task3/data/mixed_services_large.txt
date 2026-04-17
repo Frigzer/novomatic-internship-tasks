@@ -1,0 +1,31 @@
+[2024-01-15T07:55:00] [INFO] [Gateway] External API heartbeat OK
+[2024-01-15T08:00:11] [INFO] [AuthService] User emma logged in successfully
+[2024-01-15T08:05:43] [DEBUG] [Catalog] Cache hit for product SKU-100
+[2024-01-15T08:07:01] [INFO] [Cart] Product SKU-100 added to cart by emma
+[2024-01-15T08:10:15] [INFO] [Checkout] Checkout session started for cart 7001
+[2024-01-15T08:11:33] [WARN] [Recommendation] Fallback model activated
+[2024-01-15T08:12:54] [INFO] [Payment] Transaction 7001 authorized
+[2024-01-15T08:13:10] [INFO] [OrderService] Order 7001 created
+[2024-01-15T08:14:02] [ERROR] [Email] SMTP connection timeout
+[2024-01-15T08:15:40] [INFO] [Email] Retrying notification for order 7001
+[2024-01-15T08:18:27] [INFO] [Email] Order confirmation sent to emma@example.com
+[2024-01-15T08:20:00] [DEBUG] [Catalog] Cache miss for product SKU-555
+[2024-01-15T08:21:19] [INFO] [Catalog] Product SKU-555 loaded from database
+[2024-01-15T08:24:08] [WARN] [Database] Replica lag detected
+[2024-01-15T08:30:00] [ERROR] [Gateway] Upstream returned 502 Bad Gateway
+[2024-01-15T08:31:15] [INFO] [Gateway] Circuit breaker opened
+[2024-01-15T08:34:51] [WARN] [Gateway] Traffic shifted to backup provider
+[2024-01-15T08:40:00] [INFO] [Gateway] Circuit breaker closed
+[2024-01-15T08:45:05] [INFO] [OrderService] Order 7002 created
+[2024-01-15T08:46:30] [ERROR] [Payment] Transaction 7002 rejected: insufficient funds
+[2024-01-15T08:47:11] [INFO] [Support] Ticket 4401 opened automatically
+[2024-01-15T08:49:59] [INFO] [AuthService] User liam logged in successfully
+[2024-01-15T08:50:42] [DEBUG] [AuthService] Refresh token rotation for user liam
+[2024-01-15T08:52:00] [WARN] [Security] Suspicious login pattern for user liam
+[2024-01-15T09:00:00] [FATAL] [Database] Write quorum lost
+[2024-01-15T09:01:20] [INFO] [Recovery] Emergency maintenance mode enabled
+[2024-01-15T09:04:00] [INFO] [Recovery] Database recovered from replica snapshot
+[2024-01-15T09:05:12] [INFO] [Gateway] External API heartbeat OK
+[2024-01-15T09:06:33] [INFO] [Checkout] Checkout session started for cart 7003
+[2024-01-15T09:08:44] [INFO] [Payment] Transaction 7003 authorized
+[2024-01-15T09:10:10] [INFO] [OrderService] Order 7003 created

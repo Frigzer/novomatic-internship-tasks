@@ -1,0 +1,6 @@
+[2023-10-25T10:20:00] [INFO] [OrderService] Order 5002 shipped
+[2023-10-25T09:59:59] [INFO] [OrderService] Order 5001 created
+[2023-10-25T10:00:00] [INFO] [OrderService] Order 5001 accepted
+[2023-10-25T10:30:00] [ERROR] [Inventory] Stock mismatch detected
+[2023-10-25T10:10:00] [WARN] [Inventory] Low stock for item SKU-123
+[2023-10-25T10:05:00] [INFO] [OrderService] Order 5001 paid

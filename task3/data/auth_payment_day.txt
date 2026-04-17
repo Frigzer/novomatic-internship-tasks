@@ -1,0 +1,20 @@
+[2023-10-25T08:58:01] [INFO] [Bootstrap] Application startup
+[2023-10-25T09:00:00] [INFO] [AuthService] Login page initialized
+[2023-10-25T09:01:17] [DEBUG] [AuthService] Checking credentials for user alice
+[2023-10-25T09:02:03] [INFO] [AuthService] User alice logged in successfully
+[2023-10-25T09:05:49] [WARN] [AuthService] Multiple failed login attempts for user bob
+[2023-10-25T09:07:10] [ERROR] [Database] Connection timeout while reading user profile
+[2023-10-25T09:10:34] [INFO] [Payment] Transaction 10001 processed
+[2023-10-25T09:11:00] [DEBUG] [Payment] Sending receipt email for transaction 10001
+[2023-10-25T09:20:40] [ERROR] [Payment] Transaction 10002 rejected: card expired
+[2023-10-25T09:22:12] [INFO] [Notification] Receipt email sent to alice@example.com
+[2023-10-25T09:30:00] [WARN] [Database] Slow query detected on invoices table
+[2023-10-25T09:45:09] [INFO] [Payment] Transaction 10003 processed
+[2023-10-25T10:00:00] [INFO] [AuthService] User charlie logged in successfully
+[2023-10-25T10:10:30] [ERROR] [AuthService] Token validation failed for user dave
+[2023-10-25T10:12:12] [INFO] [Payment] Transaction 10004 processed
+[2023-10-25T10:18:50] [WARN] [Payment] Transaction 10005 delayed by fraud check
+[2023-10-25T10:30:15] [FATAL] [Database] Primary replica unavailable
+[2023-10-25T10:35:00] [INFO] [Recovery] Automatic failover completed
+[2023-10-25T10:45:42] [DEBUG] [Recovery] Replication lag is now 0 seconds
+[2023-10-25T11:00:00] [INFO] [AuthService] User alice logged out

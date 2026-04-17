@@ -1,0 +1,4 @@
+[2023-10-25T10:00:00] [INFO] [AuthService] First
+[2023-10-25T10:00:00] [ERROR] [Database] Second
+[2023-10-25T10:00:00] [WARN] [Payment] Third
+[2023-10-25T10:00:00] [DEBUG] [Recovery] Fourth

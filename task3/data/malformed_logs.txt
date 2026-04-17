@@ -1,0 +1,6 @@
+[2023-10-25T10:00:00] [INFO] [AuthService] Good line
+2023-10-25T10:05:00 [ERROR] [Database] Missing opening bracket in timestamp
+[2023-10-25T10:10:00] [WRONG] [Database] Invalid log level
+[2023-10-25T10:15:00] [INFO] Missing source bracket
+[2023-10-25T10:20:00] [WARN] [Payment]
+[2023-10-25T10:25:00] [ERROR] [Payment] Good line again

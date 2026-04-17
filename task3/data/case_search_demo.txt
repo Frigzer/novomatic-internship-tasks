@@ -1,0 +1,5 @@
+[2023-12-01T12:00:00] [INFO] [Payment] Transaction created for order 9001
+[2023-12-01T12:01:00] [INFO] [Payment] transaction approved by gateway
+[2023-12-01T12:02:00] [WARN] [Payment] TRANSACTION queued for manual review
+[2023-12-01T12:03:00] [ERROR] [Payment] Refund transaction failed
+[2023-12-01T12:04:00] [INFO] [Reporting] Daily summary generated
