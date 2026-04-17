@@ -1,6 +1,10 @@
 #pragma once
 
+#include "blueprint_file_manager.hpp"
+#include "blueprint_viewer_panel.hpp"
 #include "graph.hpp"
+#include "graph_view_controller.hpp"
+#include "imgui_sfml_context.hpp"
 #include "layout_engine.hpp"
 
 #include <SFML/Graphics.hpp>
@@ -8,84 +12,69 @@
 #include <SFML/Window.hpp>
 
 #include <array>
-#include <filesystem>
 #include <string>
-#include <vector>
+#include <string_view>
 
 namespace task2 {
 
 class BlueprintViewerApp {
 public:
 	BlueprintViewerApp();
-	~BlueprintViewerApp();
+	~BlueprintViewerApp() noexcept = default;
 
-	int run();
+	BlueprintViewerApp( const BlueprintViewerApp& )            = delete;
+	BlueprintViewerApp& operator=( const BlueprintViewerApp& ) = delete;
+	BlueprintViewerApp( BlueprintViewerApp&& )                 = delete;
+	BlueprintViewerApp& operator=( BlueprintViewerApp&& )      = delete;
+
+	[[nodiscard]] int run();
 
 private:
-	struct GuiLimits {
-		static constexpr float MarginMin = 0.0f;
-		static constexpr float MarginMax = 500.0f;
-
-		static constexpr float LayerSpacingMin = 50.0f;
-		static constexpr float LayerSpacingMax = 600.0f;
-
-		static constexpr float NodeSpacingMin = 20.0f;
-		static constexpr float NodeSpacingMax = 300.0f;
-
-		static constexpr float ComponentSpacingMin = 50.0f;
-		static constexpr float ComponentSpacingMax = 500.0f;
-
-		static constexpr float DefaultWidth  = 400.0f;
-		static constexpr float DefaultHeight = 550.0f;
-	};
-
-	static constexpr std::size_t FileNameBufferSize = 256;
+	void initializeWindow();
+	void loadFont();
+	void initializeOutputFileNameBuffer();
 
 	void processEvents();
 	void handleEvent( const sf::Event& event );
-
 	void handleSystemEvent( const sf::Event& event );
-    void handleKeyboardEvent( const sf::Event::KeyPressed& event );
-    void handleMouseWheelEvent( const sf::Event::MouseWheelScrolled& event );
-    void handleMouseButtonEvent( const sf::Event& event );
-    void handleMouseMoveEvent( const sf::Event::MouseMoved& event );
+	void handleKeyboardEvent( const sf::Event::KeyPressed& event );
+	void handleMouseWheelEvent( const sf::Event::MouseWheelScrolled& event );
+	void handleMouseButtonEvent( const sf::Event& event );
+	void handleMouseMoveEvent( const sf::Event::MouseMoved& event );
 
 	void update( sf::Time deltaTime );
 	void render();
 
-	void drawGui();
+	[[nodiscard]] BlueprintViewerPanel::State makePanelState();
+	void handlePanelResult( const BlueprintViewerPanel::Result& result );
 
 	void loadGraph();
 	void saveGraph();
 	void applyLayout();
-
-	void resetView();
-	void fitGraphInView();
-
 	void refreshInputFiles();
+	void syncOutputFileName();
 
-	const Node* findHoveredNode() const;
+	[[nodiscard]] std::string outputFileNameFromBuffer() const;
+	void setOutputFileNameBuffer( std::string_view fileName );
+
+	static constexpr unsigned int FrameRateLimit = 60;
+	static constexpr float KeyboardZoomFactor    = 1.1f;
+	static constexpr float ZoomInFactor          = 0.9f;
+	static constexpr float ZoomOutFactor         = 1.1f;
+
+	static constexpr std::size_t OutputFileNameBufferSize = BlueprintViewerPanel::OutputFileNameBufferSize;
 
 	sf::RenderWindow window_;
-	sf::View graphView_;
-	sf::Font font_;
-	sf::Clock deltaClock_;
-
-	Graph graph_;
+	GraphViewController viewController_;
+	ImGuiSfmlContext imguiContext_;
+	BlueprintFileManager fileManager_;
+	BlueprintViewerPanel panel_;
 	LayoutEngine::Config layoutConfig_;
 
-	bool isPanning_{ false };
-	sf::Vector2i lastMousePixel_;
-
-	std::filesystem::path inputPath_;
-	std::filesystem::path outputPath_;
-	std::filesystem::path fontPath_;
-
-	std::vector< std::filesystem::path > inputFiles_;
-	int selectedInputIndex_{ -1 };
-
-	std::array< char, FileNameBufferSize > outputFileNameBuffer_{};
-
+	sf::Font font_;
+	sf::Clock deltaClock_;
+	Graph graph_;
+	std::array< char, OutputFileNameBufferSize > outputFileNameBuffer_{};
 	std::string statusMessage_{ "Ready" };
 };
 

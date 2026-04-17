@@ -1,7 +1,14 @@
+cmake_minimum_required(VERSION 3.25)
+project(task2 LANGUAGES CXX)
+
 add_library(task2_lib
+    src/blueprint_file_manager.cpp
     src/blueprint_viewer_app.cpp
-    src/graph_renderer.cpp
+    src/blueprint_viewer_panel.cpp
     src/graph.cpp
+    src/graph_renderer.cpp
+    src/graph_view_controller.cpp
+    src/imgui_sfml_context.cpp
     src/json_io.cpp
     src/layout_engine.cpp
 )
