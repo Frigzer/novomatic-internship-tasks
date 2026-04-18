@@ -54,7 +54,7 @@ conan install . -pr:h=profiles/windows-msvc-release -pr:b=profiles/windows-msvc-
 ```
 
 ```bash
-cmake --preset conan-default
+cmake --preset conan-release
 cmake --build --preset conan-release
 ctest --preset conan-release
 ```
@@ -74,7 +74,7 @@ conan install . -pr:h=profiles/linux-gcc-release -pr:b=profiles/linux-gcc-releas
 ```
 
 ```bash
-cmake --preset conan-default
+cmake --preset conan-release
 cmake --build --preset conan-release
 ctest --preset conan-release
 ```
