@@ -1,5 +1,9 @@
 # novomatic-internship-tasks
 
+## Wymagania wstępne
+
+* CMake ≥ 3.23
+
 ## Instalacja Conana
 
 ### Windows
