@@ -61,6 +61,12 @@ compile_commands.json
 # Editor settings
 .vscode/
 
+# CMake internal cache
+.cmake/
+
+# Conan / CMake presets generated locally
+CMakeUserPresets.json
+
 # vcpkg
 vcpkg_installed/
 
