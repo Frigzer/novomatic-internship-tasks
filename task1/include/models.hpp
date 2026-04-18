@@ -10,7 +10,7 @@ namespace task1 {
 
 using TicketId      = std::uint64_t;
 using ReservationId = std::uint64_t;
-using Money         = std::int64_t;  // w groszach
+using Money         = std::int64_t;
 
 enum class TicketStatus : std::uint8_t { Available, Reserved, Sold };
 

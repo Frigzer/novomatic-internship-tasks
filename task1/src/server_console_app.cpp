@@ -21,8 +21,6 @@
 namespace task1 {
 namespace {
 
-constexpr std::uint16_t defaultPort = 5555;
-
 std::atomic_bool g_keep_running{ true };
 
 std::filesystem::path defaultDataFile() {
