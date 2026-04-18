@@ -3,6 +3,7 @@ gtest/1.17.0
 nlohmann_json/3.12.0
 sfml/3.0.2
 imgui-sfml/3.0
+asio/1.36.0
 
 [generators]
 CMakeToolchain
