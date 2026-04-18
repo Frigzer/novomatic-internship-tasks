@@ -3,6 +3,7 @@
 #include "ticket_server.hpp"
 
 #include <atomic>
+#include <barrier>
 #include <chrono>
 #include <string>
 #include <thread>
@@ -11,7 +12,7 @@
 namespace task1 {
 namespace {
 
-using Clock = std::chrono::system_clock;
+using Clock = std::chrono::steady_clock;
 
 }  // namespace
 
@@ -24,10 +25,12 @@ TEST( ConcurrencyTests, OnlyOneClientCanReserveLastTicket ) {
 
 	constexpr int thread_count = 10;
 	std::atomic< int > success_count{ 0 };
+	std::barrier start_line( thread_count );
 	std::vector< std::thread > threads;
 
 	for ( int i = 0; i < thread_count; ++i ) {
-		threads.emplace_back( [ &server, &success_count ]() {
+		threads.emplace_back( [ &server, &success_count, &start_line ]() {
+			start_line.arrive_and_wait();
 			auto reservation = server.reserveTicket( "normal" );
 			if ( reservation.has_value() ) {
 				++success_count;
@@ -63,10 +66,12 @@ TEST( ConcurrencyTests, NumberOfSuccessfulReservationsMatchesTicketPool ) {
 
 	constexpr int thread_count = 20;
 	std::atomic< int > success_count{ 0 };
+	std::barrier start_line( thread_count );
 	std::vector< std::thread > threads;
 
 	for ( int i = 0; i < thread_count; ++i ) {
-		threads.emplace_back( [ &server, &success_count ]() {
+		threads.emplace_back( [ &server, &success_count, &start_line ]() {
+			start_line.arrive_and_wait();
 			auto reservation = server.reserveTicket( "normal" );
 			if ( reservation.has_value() ) {
 				++success_count;
@@ -103,10 +108,13 @@ TEST( ConcurrencyTests, ConcurrentPurchasesDoNotOversellTickets ) {
 	constexpr int thread_count = 10;
 	std::atomic< int > success_count{ 0 };
 	std::atomic< int > failure_count{ 0 };
+	std::barrier start_line( thread_count );
 	std::vector< std::thread > threads;
 
 	for ( int i = 0; i < thread_count; ++i ) {
-		threads.emplace_back( [ &server, &success_count, &failure_count, i ]() {
+		threads.emplace_back( [ &server, &success_count, &failure_count, &start_line, i ]() {
+			start_line.arrive_and_wait();
+
 			auto reservation = server.reserveTicket( "normal" );
 			if ( !reservation.has_value() ) {
 				++failure_count;

@@ -48,4 +48,26 @@ TEST( ChangeCalculatorTests, ReturnsNulloptWhenChangeCannotBeMade ) {
 	EXPECT_FALSE( result.has_value() );
 }
 
+TEST( ChangeCalculatorTests, ReconstructionDoesNotExceedAvailableCoinCounts ) {
+	CoinInventory inventory( { { 10, 2 }, { 4, 2 }, { 3, 3 }, { 1, 1 } } );
+	auto result = ChangeCalculator::computeMinimalCoinChange( 12, inventory );
+
+	ASSERT_TRUE( result.has_value() );
+	EXPECT_EQ( result->total, 12 );
+
+	Money reconstructed_total = 0;
+	std::size_t total_coin_count = 0;
+	for ( const auto& [ denomination, used_count ] : result->coins ) {
+		EXPECT_LE( static_cast< std::size_t >( used_count ), inventory.count( denomination ) );
+		reconstructed_total += denomination * used_count;
+		total_coin_count += static_cast< std::size_t >( used_count );
+	}
+
+	EXPECT_EQ( reconstructed_total, 12 );
+	EXPECT_EQ( total_coin_count, 4U );
+	EXPECT_EQ( result->coins.at( 4 ), 2 );
+	EXPECT_EQ( result->coins.at( 3 ), 1 );
+	EXPECT_EQ( result->coins.at( 1 ), 1 );
+}
+
 }  // namespace task1

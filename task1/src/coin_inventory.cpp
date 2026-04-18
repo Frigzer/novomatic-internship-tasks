@@ -5,7 +5,18 @@
 
 namespace task1 {
 
-CoinInventory::CoinInventory( std::map< Money, int, std::greater<> > coins ) : coins_( std::move( coins ) ) {}
+CoinInventory::CoinInventory( std::map< Money, int, std::greater<> > coins ) {
+	for ( const auto& [ denomination, count ] : coins ) {
+		if ( denomination <= 0 ) {
+			throw std::invalid_argument( "Coin denomination must be positive" );
+		}
+		if ( count < 0 ) {
+			throw std::invalid_argument( "Coin count cannot be negative" );
+		}
+	}
+
+	coins_ = std::move( coins );
+}
 
 const std::map< Money, int, std::greater<> >& CoinInventory::getCoins() const {
 	return coins_;
@@ -51,7 +62,9 @@ bool CoinInventory::removeCoin( Money denomination, int count ) {
 
 bool CoinInventory::removeCoins( const std::map< Money, int, std::greater<> >& coins ) {
 	for ( const auto& [ denomination, count ] : coins ) {
-		if ( count < 0 ) return false;
+		if ( denomination <= 0 || count < 0 ) {
+			return false;
+		}
 
 		auto it = coins_.find( denomination );
 		if ( it == coins_.end() || it->second < count ) {

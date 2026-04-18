@@ -37,8 +37,8 @@ struct Ticket {
 struct Reservation {
 	ReservationId id{ 0 };
 	TicketId ticket_id{ 0 };
-	std::chrono::system_clock::time_point created_at;
-	std::chrono::system_clock::time_point expires_at;
+	std::chrono::steady_clock::time_point created_at;
+	std::chrono::steady_clock::time_point expires_at;
 };
 
 struct ChangeResult {

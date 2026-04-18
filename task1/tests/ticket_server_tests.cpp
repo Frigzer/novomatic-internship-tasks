@@ -5,7 +5,7 @@
 namespace task1 {
 namespace {
 
-using Clock = std::chrono::system_clock;
+using Clock = std::chrono::steady_clock;
 
 std::vector< Ticket > makeSampleTickets() {
 	return {
@@ -81,6 +81,28 @@ TEST( TicketServerTests, TimeoutReleasesReservation ) {
 	ASSERT_EQ( available.size(), 1U );
 	EXPECT_EQ( available[ 0 ].type, "normal" );
 	EXPECT_EQ( available[ 0 ].available_count, 1 );
+}
+
+TEST( TicketServerTests, ExpiredReservationReturnsDedicatedError ) {
+	auto now = Clock::now();
+	TicketServer server(
+	    { Ticket{ .id = 1, .price = 350, .type = "normal", .status = TicketStatus::Available, .owner = std::nullopt } },
+	    CoinInventory( { { 200, 1 }, { 100, 5 }, { 50, 2 } } ), std::chrono::seconds( 60 ), [ &now ] { return now; } );
+
+	auto reservation = server.reserveTicket( "normal" );
+	ASSERT_TRUE( reservation.has_value() );
+
+	now += std::chrono::seconds( 61 );
+
+	CoinInventory inserted( { { 500, 1 } } );
+	CustomerData customer{ .first_name = "Jan", .last_name = "Kowalski" };
+
+	auto result = server.finalizePurchase( reservation->reservation_id, customer, inserted );
+
+	ASSERT_TRUE( std::holds_alternative< PurchaseFailure >( result ) );
+	const auto& failure = std::get< PurchaseFailure >( result );
+	EXPECT_EQ( failure.error, PurchaseError::ReservationExpired );
+	EXPECT_EQ( failure.returned_coins.at( 500 ), 1 );
 }
 
 TEST( TicketServerTests, SuccessfulPurchaseAssignsTicketAndReturnsChange ) {

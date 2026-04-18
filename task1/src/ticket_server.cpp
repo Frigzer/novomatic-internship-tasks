@@ -51,8 +51,7 @@ std::optional< ReservationResult > TicketServer::reserveTicket( const std::strin
 	if ( !result ) return std::nullopt;
 
 	Ticket& ticket = *result.value();
-
-	ticket.status = TicketStatus::Reserved;
+	ticket.status  = TicketStatus::Reserved;
 
 	const auto now = clock_();
 	Reservation res{ .id         = next_reservation_id_++,
@@ -71,7 +70,9 @@ bool TicketServer::cancelReservation( ReservationId reservation_id ) {
 	cleanupExpiredReservations();
 
 	auto* res = findReservationById( reservation_id );
-	if ( !res ) return false;
+	if ( !res ) {
+		return false;
+	}
 
 	Ticket* ticket = findTicketById( res->ticket_id );
 	if ( ticket && ticket->status == TicketStatus::Reserved ) {
@@ -91,16 +92,20 @@ std::variant< PurchaseSuccess, PurchaseFailure > TicketServer::finalizePurchase(
 	Reservation* res = findReservationById( reservation_id );
 	Ticket* ticket   = res ? findTicketById( res->ticket_id ) : nullptr;
 
-	// Funkcja pomocnicza do obsługi błędów zakupu (DRY)
 	auto fail = [ & ]( PurchaseError err, std::string msg ) {
-		if ( ticket ) ticket->status = TicketStatus::Available;
+		if ( ticket && ticket->status == TicketStatus::Reserved ) {
+			ticket->status = TicketStatus::Available;
+		}
 		removeReservation( reservation_id );
 		return PurchaseFailure{
 		    .error = err, .returned_coins = inserted_coins.getCoins(), .message = std::move( msg ) };
 	};
 
 	if ( !res || !ticket || ticket->status != TicketStatus::Reserved ) {
-		return fail( PurchaseError::ReservationNotFound, "Reservation expired or invalid" );
+		if ( isReservationExpired( reservation_id ) ) {
+			return fail( PurchaseError::ReservationExpired, "Reservation expired" );
+		}
+		return fail( PurchaseError::ReservationNotFound, "Reservation not found" );
 	}
 
 	const Money paid = inserted_coins.total();
@@ -139,10 +144,10 @@ void TicketServer::cleanupExpiredReservations() {
 
 	std::erase_if( reservations_, [ & ]( const Reservation& res ) {
 		if ( res.expires_at <= now ) {
-			Ticket* t = findTicketById( res.ticket_id );
-			if ( t && t->status == TicketStatus::Reserved ) {
-				t->status = TicketStatus::Available;
+			if ( Ticket* ticket = findTicketById( res.ticket_id ); ticket && ticket->status == TicketStatus::Reserved ) {
+				ticket->status = TicketStatus::Available;
 			}
+			expired_reservation_ids_.insert( res.id );
 			return true;
 		}
 		return false;
@@ -156,24 +161,34 @@ void TicketServer::removeReservation( ReservationId reservation_id ) {
 }
 
 std::expected< Ticket*, std::monostate > TicketServer::findAvailableTicketByType( const std::string& ticket_type ) {
-	for ( auto& t : tickets_ ) {
-		if ( t.type == ticket_type && t.status == TicketStatus::Available ) return &t;
+	for ( auto& ticket : tickets_ ) {
+		if ( ticket.type == ticket_type && ticket.status == TicketStatus::Available ) {
+			return &ticket;
+		}
 	}
 	return std::unexpected( std::monostate{} );
 }
 
 Ticket* TicketServer::findTicketById( TicketId id ) {
-	for ( auto& t : tickets_ ) {
-		if ( t.id == id ) return &t;
+	for ( auto& ticket : tickets_ ) {
+		if ( ticket.id == id ) {
+			return &ticket;
+		}
 	}
 	return nullptr;
 }
 
 Reservation* TicketServer::findReservationById( ReservationId id ) {
-	for ( auto& r : reservations_ ) {
-		if ( r.id == id ) return &r;
+	for ( auto& reservation : reservations_ ) {
+		if ( reservation.id == id ) {
+			return &reservation;
+		}
 	}
 	return nullptr;
+}
+
+bool TicketServer::isReservationExpired( ReservationId reservation_id ) const {
+	return expired_reservation_ids_.contains( reservation_id );
 }
 
 }  // namespace task1

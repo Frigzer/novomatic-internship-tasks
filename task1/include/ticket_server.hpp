@@ -7,6 +7,7 @@
 #include <expected>
 #include <functional>
 #include <mutex>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -14,12 +15,12 @@ namespace task1 {
 
 class TicketServer {
 public:
-	using TimePoint = std::chrono::system_clock::time_point;
+	using TimePoint = std::chrono::steady_clock::time_point;
 	using ClockFn   = std::function< TimePoint() >;
 
 	TicketServer(
 	    std::vector< Ticket > tickets, CoinInventory initial_cashbox, std::chrono::seconds reservation_timeout,
-	    ClockFn clock = [] { return std::chrono::system_clock::now(); } );
+	    ClockFn clock = [] { return std::chrono::steady_clock::now(); } );
 
 	std::vector< TicketAvailability > getAvailableTickets();
 
@@ -36,6 +37,7 @@ private:
 	std::expected< Ticket*, std::monostate > findAvailableTicketByType( const std::string& ticket_type );
 	Ticket* findTicketById( TicketId ticket_id );
 	Reservation* findReservationById( ReservationId reservation_id );
+	bool isReservationExpired( ReservationId reservation_id ) const;
 
 	void removeReservation( ReservationId reservation_id );
 
@@ -44,6 +46,7 @@ private:
 	std::vector< Ticket > tickets_;
 	CoinInventory cashbox_;
 	std::vector< Reservation > reservations_;
+	std::unordered_set< ReservationId > expired_reservation_ids_;
 
 	std::chrono::seconds reservation_timeout_;
 	ClockFn clock_;
