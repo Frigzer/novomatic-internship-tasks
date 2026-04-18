@@ -1,3 +1,4 @@
+#include "ticket_server.hpp"
 #include "ticket_machine_client.hpp"
 #include <iomanip>
 #include <iostream>
