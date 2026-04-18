@@ -8,6 +8,7 @@
 #include <istream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace task1 {
 namespace {
@@ -25,7 +26,27 @@ void ensureOkResponse(const Json& response) {
 TicketMachineClient::TicketMachineClient(TicketServer& server) : backend_(&server) {}
 
 TicketMachineClient::TicketMachineClient(std::string host, std::uint16_t port)
-    : backend_(RemoteEndpoint{.host = std::move(host), .port = port}) {}
+    : backend_(RemoteEndpoint{.host = std::move(host), .port = port}),
+      remote_connection_(std::make_unique<RemoteConnection>()) {}
+
+TicketMachineClient::~TicketMachineClient() {
+    closeRemoteConnection();
+}
+
+TicketMachineClient::TicketMachineClient(TicketMachineClient&& other) noexcept
+    : backend_(std::move(other.backend_)),
+      remote_connection_(std::move(other.remote_connection_)) {}
+
+TicketMachineClient& TicketMachineClient::operator=(TicketMachineClient&& other) noexcept {
+    if (this == &other) {
+        return *this;
+    }
+
+    closeRemoteConnection();
+    backend_ = std::move(other.backend_);
+    remote_connection_ = std::move(other.remote_connection_);
+    return *this;
+}
 
 std::vector<TicketAvailability> TicketMachineClient::showAvailableTickets() {
     if (!isRemote()) {
@@ -99,6 +120,12 @@ const TicketMachineClient::RemoteEndpoint& TicketMachineClient::remoteEndpoint()
     return *endpoint;
 }
 
+TicketMachineClient::RemoteConnection& TicketMachineClient::remoteConnection() {
+    if (!isRemote() || remote_connection_ == nullptr) {
+        throw std::logic_error("Remote ticket server connection is not available");
+    }
+    return *remote_connection_;
+}
 
 void TicketMachineClient::ping() {
     if (!isRemote()) {
@@ -111,33 +138,56 @@ void TicketMachineClient::ping() {
         throw std::runtime_error(response.value("message", std::string{"Ping request failed"}));
     }
 }
-Json TicketMachineClient::sendRemoteRequest(const Json& request) const {
+
+void TicketMachineClient::ensureConnected() {
+    auto& connection = remoteConnection();
+    if (connection.connected && connection.socket.is_open()) {
+        return;
+    }
+
     const auto& endpoint = remoteEndpoint();
-
-    asio::io_context io_context;
-    tcp::resolver resolver(io_context);
-    tcp::socket socket(io_context);
-
     asio::error_code error;
-    const auto endpoints = resolver.resolve(endpoint.host, std::to_string(endpoint.port), error);
+    const auto endpoints = connection.resolver.resolve(endpoint.host, std::to_string(endpoint.port), error);
     if (error) {
         throw std::runtime_error("Could not resolve server address: " + error.message());
     }
 
-    asio::connect(socket, endpoints, error);
+    asio::connect(connection.socket, endpoints, error);
     if (error) {
         throw std::runtime_error("Could not connect to server: " + error.message());
     }
 
+    connection.connected = true;
+}
+
+void TicketMachineClient::closeRemoteConnection() noexcept {
+    if (remote_connection_ == nullptr) {
+        return;
+    }
+
+    asio::error_code ignored;
+    remote_connection_->socket.shutdown(tcp::socket::shutdown_both, ignored);
+    remote_connection_->socket.close(ignored);
+    remote_connection_->connected = false;
+}
+
+Json TicketMachineClient::sendRemoteRequest(const Json& request) {
+    ensureConnected();
+
+    auto& connection = remoteConnection();
+    asio::error_code error;
+
     const auto payload = request.dump() + "\n";
-    asio::write(socket, asio::buffer(payload), error);
+    asio::write(connection.socket, asio::buffer(payload), error);
     if (error) {
+        closeRemoteConnection();
         throw std::runtime_error("Could not send request to server: " + error.message());
     }
 
     asio::streambuf response_buffer;
-    asio::read_until(socket, response_buffer, '\n', error);
+    asio::read_until(connection.socket, response_buffer, '\n', error);
     if (error) {
+        closeRemoteConnection();
         throw std::runtime_error("Could not read response from server: " + error.message());
     }
 
