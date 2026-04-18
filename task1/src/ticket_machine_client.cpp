@@ -99,6 +99,18 @@ const TicketMachineClient::RemoteEndpoint& TicketMachineClient::remoteEndpoint()
     return *endpoint;
 }
 
+
+void TicketMachineClient::ping() {
+    if (!isRemote()) {
+        return;
+    }
+
+    const auto response = sendRemoteRequest(Json{{"action", "ping"}});
+    const bool ok = response.at("ok").get<bool>();
+    if (!ok) {
+        throw std::runtime_error(response.value("message", std::string{"Ping request failed"}));
+    }
+}
 Json TicketMachineClient::sendRemoteRequest(const Json& request) const {
     const auto& endpoint = remoteEndpoint();
 

@@ -59,6 +59,7 @@ int ConsoleClientApp::run() {
     }
 
     TicketMachineClient client(host_, port_);
+    client.ping();
     printWelcome();
     commandLoop(client);
     return 0;

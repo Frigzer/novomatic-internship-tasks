@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 
 namespace task1 {
 
@@ -20,6 +21,7 @@ private:
     int argc_{0};
     char** argv_{nullptr};
     std::uint16_t port_{5555};
+    std::filesystem::path data_file_path_{};
     bool show_help_{false};
 };
 

@@ -21,6 +21,7 @@ public:
     bool cancel(ReservationId reservation_id);
     std::variant<PurchaseSuccess, PurchaseFailure> buy(
         ReservationId reservation_id, const CustomerData& customer, const CoinInventory& inserted_coins);
+    void ping();
 
 private:
     struct RemoteEndpoint {
