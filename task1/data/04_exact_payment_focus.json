@@ -1,0 +1,7 @@
+{
+  "tickets": [
+    { "id": 1, "price": 350, "type": "normal", "status": "available" },
+    { "id": 2, "price": 170, "type": "reduced", "status": "available" }
+  ],
+  "cashbox": []
+}

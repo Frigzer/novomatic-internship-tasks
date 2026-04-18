@@ -1,0 +1,12 @@
+{
+  "tickets": [
+    { "id": 1, "price": 350, "type": "normal", "status": "available" }
+  ],
+  "cashbox": [
+    { "denomination": 200, "count": 2 },
+    { "denomination": 100, "count": 5 },
+    { "denomination": 50, "count": 5 },
+    { "denomination": 20, "count": 5 },
+    { "denomination": 10, "count": 5 }
+  ]
+}

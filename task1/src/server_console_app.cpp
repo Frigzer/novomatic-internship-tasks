@@ -24,7 +24,19 @@ namespace {
 std::atomic_bool g_keep_running{ true };
 
 std::filesystem::path defaultDataFile() {
-	return paths::dataDir / "server_seed.json";
+	return ( paths::dataDir / "server_seed.json" ).lexically_normal();
+}
+
+std::filesystem::path resolveDataFilePath( const std::filesystem::path& input ) {
+	if ( input.empty() ) {
+		return defaultDataFile();
+	}
+
+	if ( input.is_absolute() ) {
+		return input.lexically_normal();
+	}
+
+	return ( paths::dataDir / input ).lexically_normal();
 }
 
 std::optional< std::uint16_t > parsePort( const std::string& value ) {
@@ -101,7 +113,7 @@ void ServerConsoleApp::parseArguments() {
 				throw std::runtime_error( "Missing value after --data" );
 			}
 
-			data_file_path_ = argv_[ ++index ];
+			data_file_path_ = resolveDataFilePath( argv_[ ++index ] );
 			continue;
 		}
 
@@ -114,8 +126,9 @@ bool ServerConsoleApp::shouldPrintHelp() const noexcept {
 }
 
 void ServerConsoleApp::printHelp() const {
-	std::cout << "Usage: task1_server [--port PORT] [--data PATH]\n";
+	std::cout << "Usage: task1_server [--port PORT] [--data FILE_OR_PATH]\n";
 	std::cout << "Default data file: " << defaultDataFile().string() << '\n';
+	std::cout << "Relative values passed to --data are resolved inside: " << paths::dataDir.string() << '\n';
 }
 
 void ServerConsoleApp::registerSignalHandlers() {
