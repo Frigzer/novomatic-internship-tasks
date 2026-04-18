@@ -45,6 +45,15 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ```bash
 conan install . -pr:h=profiles/windows-clang-release -pr:b=profiles/windows-clang-release --build=missing
+```
+
+lub
+
+```bash
+conan install . -pr:h=profiles/windows-msvc-release -pr:b=profiles/windows-msvc-release --build=missing
+```
+
+```bash
 cmake --preset conan-default
 cmake --build --preset conan-release
 ctest --preset conan-release
@@ -56,6 +65,15 @@ ctest --preset conan-release
 
 ```bash
 conan install . -pr:h=profiles/linux-clang-release -pr:b=profiles/linux-clang-release --build=missing
+```
+
+lub
+
+```bash
+conan install . -pr:h=profiles/linux-gcc-release -pr:b=profiles/linux-gcc-release --build=missing
+```
+
+```bash
 cmake --preset conan-default
 cmake --build --preset conan-release
 ctest --preset conan-release
