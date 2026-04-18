@@ -8,3 +8,6 @@ asio/1.36.0
 [generators]
 CMakeToolchain
 CMakeDeps
+
+[layout]
+cmake_layout
