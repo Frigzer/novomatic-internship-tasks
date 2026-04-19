@@ -47,9 +47,30 @@ std::vector< std::string > splitTokens( const std::string& line ) {
 	return tokens;
 }
 
+void printHelp() {
+	std::cout << "Usage: task1 [--host HOST] [--port PORT]\n";
+}
+
+void printCommandHelp() {
+	std::cout << "Available commands:\n"
+	          << "  help                 Show this help\n"
+	          << "  list                 Show available tickets\n"
+	          << "  reserve <type>       Reserve a ticket type\n"
+	          << "  status               Show current reservation\n"
+	          << "  buy                  Finalize the current reservation\n"
+	          << "  cancel               Cancel the current reservation\n"
+	          << "  quit                 Exit the client\n";
+}
+
+void printMoney( const Money amount ) {
+	// NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+	std::cout << amount / 100 << '.' << std::setw( 2 ) << std::setfill( '0' ) << amount % 100;
+	std::cout << std::setfill( ' ' );
+}
+
 }  // namespace
 
-ConsoleClientApp::ConsoleClientApp( int argc, char* argv[] ) : argc_( argc ), argv_( argv ) {}
+ConsoleClientApp::ConsoleClientApp( std::span< char* const > args ) : args_( args ) {}
 
 int ConsoleClientApp::run() {
 	parseArguments();
@@ -66,30 +87,37 @@ int ConsoleClientApp::run() {
 }
 
 void ConsoleClientApp::parseArguments() {
-	for ( int index = 1; index < argc_; ++index ) {
-		const std::string_view argument = argv_[ index ];
+	for ( std::size_t index = 1; index < args_.size(); ++index ) {
+		const std::string_view argument = args_[ index ];
+
 		if ( argument == "--help" || argument == "-h" ) {
 			show_help_ = true;
 			return;
 		}
+
 		if ( argument == "--host" ) {
-			if ( index + 1 >= argc_ ) {
+			if ( index + 1 >= args_.size() ) {
 				throw std::runtime_error( "Missing value after --host" );
 			}
-			host_ = argv_[ ++index ];
+
+			host_ = args_[ ++index ];
 			continue;
 		}
+
 		if ( argument == "--port" ) {
-			if ( index + 1 >= argc_ ) {
+			if ( index + 1 >= args_.size() ) {
 				throw std::runtime_error( "Missing value after --port" );
 			}
-			auto parsed_port = parsePort( argv_[ ++index ] );
+
+			auto parsed_port = parsePort( args_[ ++index ] );
 			if ( !parsed_port.has_value() ) {
 				throw std::runtime_error( "Invalid port value" );
 			}
+
 			port_ = *parsed_port;
 			continue;
 		}
+
 		throw std::runtime_error( "Unknown argument: " + std::string( argument ) );
 	}
 }
@@ -98,24 +126,9 @@ bool ConsoleClientApp::shouldPrintHelp() const noexcept {
 	return show_help_;
 }
 
-void ConsoleClientApp::printHelp() const {
-	std::cout << "Usage: task1 [--host HOST] [--port PORT]\n";
-}
-
 void ConsoleClientApp::printWelcome() const {
 	std::cout << "Ticket machine client connected to " << host_ << ':' << port_ << "\n";
 	printCommandHelp();
-}
-
-void ConsoleClientApp::printCommandHelp() const {
-	std::cout << "Available commands:\n"
-	          << "  help                 Show this help\n"
-	          << "  list                 Show available tickets\n"
-	          << "  reserve <type>       Reserve a ticket type\n"
-	          << "  status               Show current reservation\n"
-	          << "  buy                  Finalize the current reservation\n"
-	          << "  cancel               Cancel the current reservation\n"
-	          << "  quit                 Exit the client\n";
 }
 
 void ConsoleClientApp::commandLoop( TicketMachineClient& client ) {
@@ -313,11 +326,6 @@ void ConsoleClientApp::printPurchaseFailure( const PurchaseFailure& failure ) {
 	for ( const auto& [ denomination, count ] : failure.returned_coins ) {
 		std::cout << "    - " << denomination << " gr x " << count << '\n';
 	}
-}
-
-void ConsoleClientApp::printMoney( const Money amount ) {
-	std::cout << amount / 100 << '.' << std::setw( 2 ) << std::setfill( '0' ) << amount % 100;
-	std::cout << std::setfill( ' ' );
 }
 
 std::optional< CoinInventory > ConsoleClientApp::readInsertedCoins() {
