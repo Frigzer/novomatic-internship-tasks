@@ -5,6 +5,41 @@
 
 namespace task2 {
 
+namespace {
+
+struct GraphBounds {
+	float minX{};
+	float minY{};
+	float maxX{};
+	float maxY{};
+};
+
+std::optional< GraphBounds > computeGraphBounds( const Graph& graph, float padding ) {
+	if ( graph.getNodes().empty() ) {
+		return std::nullopt;
+	}
+
+	GraphBounds bounds{ .minX = std::numeric_limits< float >::max(),
+	                    .minY = std::numeric_limits< float >::max(),
+	                    .maxX = std::numeric_limits< float >::lowest(),
+	                    .maxY = std::numeric_limits< float >::lowest() };
+
+	for ( const auto& [ _, node ] : graph.getNodes() ) {
+		bounds.minX = std::min( bounds.minX, node.x );
+		bounds.minY = std::min( bounds.minY, node.y );
+		bounds.maxX = std::max( bounds.maxX, node.x + node.width );
+		bounds.maxY = std::max( bounds.maxY, node.y + node.height );
+	}
+
+	bounds.minX -= padding;
+	bounds.minY -= padding;
+	bounds.maxX += padding;
+	bounds.maxY += padding;
+
+	return bounds;
+}
+}  // namespace
+
 GraphViewController::GraphViewController( const sf::View& initialView ) : view_( initialView ) {}
 
 const sf::View& GraphViewController::view() const noexcept {
@@ -94,32 +129,6 @@ const Node* GraphViewController::findHoveredNode( const sf::RenderWindow& window
 	}
 
 	return nullptr;
-}
-
-std::optional< GraphViewController::GraphBounds > GraphViewController::computeGraphBounds( const Graph& graph,
-                                                                                           float padding ) const {
-	if ( graph.getNodes().empty() ) {
-		return std::nullopt;
-	}
-
-	GraphBounds bounds{ .minX = std::numeric_limits< float >::max(),
-	                    .minY = std::numeric_limits< float >::max(),
-	                    .maxX = std::numeric_limits< float >::lowest(),
-	                    .maxY = std::numeric_limits< float >::lowest() };
-
-	for ( const auto& [ _, node ] : graph.getNodes() ) {
-		bounds.minX = std::min( bounds.minX, node.x );
-		bounds.minY = std::min( bounds.minY, node.y );
-		bounds.maxX = std::max( bounds.maxX, node.x + node.width );
-		bounds.maxY = std::max( bounds.maxY, node.y + node.height );
-	}
-
-	bounds.minX -= padding;
-	bounds.minY -= padding;
-	bounds.maxX += padding;
-	bounds.maxY += padding;
-
-	return bounds;
 }
 
 }  // namespace task2

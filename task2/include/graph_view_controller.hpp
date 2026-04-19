@@ -4,8 +4,6 @@
 
 #include <SFML/Graphics.hpp>
 
-#include <optional>
-
 namespace task2 {
 
 class GraphViewController {
@@ -29,15 +27,6 @@ public:
 	[[nodiscard]] const Node* findHoveredNode( const sf::RenderWindow& window, const Graph& graph ) const;
 
 private:
-	struct GraphBounds {
-		float minX{};
-		float minY{};
-		float maxX{};
-		float maxY{};
-	};
-
-	[[nodiscard]] std::optional< GraphBounds > computeGraphBounds( const Graph& graph, float padding ) const;
-
 	sf::View view_;
 	bool isPanning_{ false };
 	sf::Vector2i lastMousePixel_;
