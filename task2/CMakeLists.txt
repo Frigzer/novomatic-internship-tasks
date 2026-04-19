@@ -22,7 +22,7 @@ target_compile_features(task2_lib PUBLIC cxx_std_23)
 
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(SFML CONFIG REQUIRED COMPONENTS Graphics Window System)
-find_package(imgui-sfml CONFIG REQUIRED)
+find_package(ImGui-SFML CONFIG REQUIRED)
 
 target_link_libraries(task2_lib 
     PUBLIC 

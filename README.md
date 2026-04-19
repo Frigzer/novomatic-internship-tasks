@@ -3,61 +3,18 @@
 ## Wymagania wstępne
 
 * CMake ≥ 3.23
-
-## Instalacja Conana
-
-### Windows
-
-Opcja 1 (polecana):
-
-```bash
-winget install JFrog.Conan
-```
-
-Opcja 2:
-
-```bash
-pip install conan
-```
-
-### Linux 
-
-Najprościej przez pip:
-
-```bash
-pip install --user conan
-```
-
-Jeśli `pip` nie jest dostępny:
-
-```bash
-sudo apt install python3-pip
-pip3 install --user conan
-```
-
-Dodaj do PATH jeśli trzeba:
-
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-```
-
----
+* Conan 2.x
 
 ## Build
 
-### Windows
-
 ```bash
-conan install . -pr:h=profiles/windows-clang-release -pr:b=profiles/windows-clang-release --build=missing
+conan profile detect --force
 ```
 
-lub
+### Release
 
 ```bash
-conan install . -pr:h=profiles/windows-msvc-release -pr:b=profiles/windows-msvc-release --build=missing
-```
-
-```bash
+conan install . -pr:h=profiles/release.conan -pr:b=profiles/release.conan --build=missing
 cmake --preset conan-release
 cmake --build --preset conan-release
 ctest --preset conan-release
@@ -65,22 +22,13 @@ ctest --preset conan-release
 
 ---
 
-### Linux
+### Debug
 
 ```bash
-conan install . -pr:h=profiles/linux-clang-release -pr:b=profiles/linux-clang-release --build=missing
-```
-
-lub
-
-```bash
-conan install . -pr:h=profiles/linux-gcc-release -pr:b=profiles/linux-gcc-release --build=missing
-```
-
-```bash
-cmake --preset conan-release
-cmake --build --preset conan-release
-ctest --preset conan-release
+conan install . -pr:h=profiles/debug.conan -pr:b=profiles/debug.conan --build=missing
+cmake --preset conan-debug
+cmake --build --preset conan-debug
+ctest --preset conan-debug
 ```
 
 ### VS Code
@@ -106,7 +54,6 @@ Potem:
 
 ## Uwagi
 
-* Nie używaj `conan profile detect` jako głównego profilu — profile są w `profiles/`
 * Zawsze używaj:
 
   ```bash
