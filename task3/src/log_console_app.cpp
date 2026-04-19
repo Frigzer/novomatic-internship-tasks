@@ -63,16 +63,16 @@ int LogConsoleApp::execute( const CliOptions& options ) {
 }
 
 int LogConsoleApp::runWithArguments( std::span< const std::string > args ) {
-	const std::string_view executableName = args.empty() ? "task3" : std::string_view( args.front() );
-	const CliParseResult parseResult      = parser_.parse( args );
+	const std::string_view executableName       = args.empty() ? "task3" : std::string_view( args.front() );
+	const CliParser::CliParseResult parseResult = CliParser::parse( args );
 
 	switch ( parseResult.mode ) {
-	case CliMode::ShowHelp: output_ << parser_.usage( executableName ); return 0;
-	case CliMode::Error:
+	case CliParser::CliMode::ShowHelp: output_ << CliParser::usage( executableName ); return 0;
+	case CliParser::CliMode::Error:
 		error_ << "Error: " << parseResult.message << '\n';
-		error_ << parser_.usage( executableName );
+		error_ << CliParser::usage( executableName );
 		return 1;
-	case CliMode::Execute: break;
+	case CliParser::CliMode::Execute: break;
 	}
 
 	try {

@@ -5,9 +5,74 @@
 #include <optional>
 #include <stdexcept>
 
-namespace task3 {
+namespace task3::CliParser {
 
-std::string CliParser::usage( std::string_view executableName ) const {
+namespace {
+
+struct RawTimeArgs {
+	std::optional< std::chrono::sys_seconds > from;
+	std::optional< std::chrono::sys_seconds > to;
+	std::optional< std::chrono::sys_seconds > exact;
+};
+
+std::string requireValue( std::span< const std::string > args, std::size_t& index, std::string_view option ) {
+	if ( index + 1 >= args.size() ) {
+		throw std::runtime_error( "Missing value for option " + std::string( option ) );
+	}
+	return args[ ++index ];
+}
+
+void handleOption( const std::string& arg, std::span< const std::string > args, std::size_t& index, CliOptions& opt,
+                   RawTimeArgs& times ) {
+	if ( arg == "--level" )
+		opt.query.level = parseLogLevel( requireValue( args, index, arg ) );
+	else if ( arg == "--source" )
+		opt.query.source = requireValue( args, index, arg );
+	else if ( arg == "--message" )
+		opt.query.messageContains = requireValue( args, index, arg );
+	else if ( arg == "--case-sensitive" )
+		opt.query.messageCaseSensitive = true;
+	else if ( arg == "--count" )
+		opt.countOnly = true;
+	else if ( arg == "--from" )
+		times.from = LogParser::parseTimestamp( requireValue( args, index, arg ) );
+	else if ( arg == "--to" )
+		times.to = LogParser::parseTimestamp( requireValue( args, index, arg ) );
+	else if ( arg == "--timestamp" )
+		times.exact = LogParser::parseTimestamp( requireValue( args, index, arg ) );
+	else
+		throw std::runtime_error( "Unknown option: " + arg );
+}
+
+void validateAndFinalize( CliOptions& opt, const RawTimeArgs& times ) {
+	if ( opt.logFile.empty() ) {
+		throw std::runtime_error( "Missing log file path." );
+	}
+
+	if ( opt.query.messageCaseSensitive && !opt.query.messageContains.has_value() ) {
+		throw std::runtime_error( "Option --case-sensitive requires --message." );
+	}
+
+	// Walidacja logiki czasu
+	if ( times.exact.has_value() && ( times.from.has_value() || times.to.has_value() ) ) {
+		throw std::runtime_error( "Use either --timestamp or --from/--to, not both." );
+	}
+
+	if ( times.exact.has_value() ) {
+		opt.query.timeRange = TimeRange{ .from = *times.exact, .to = *times.exact };
+	} else if ( times.from.has_value() || times.to.has_value() ) {
+		if ( !times.from.has_value() || !times.to.has_value() ) {
+			throw std::runtime_error( "Both --from and --to must be provided together." );
+		}
+		if ( *times.from > *times.to ) {
+			throw std::runtime_error( "Invalid time range: --from must be earlier than --to." );
+		}
+		opt.query.timeRange = TimeRange{ .from = *times.from, .to = *times.to };
+	}
+}
+}  // namespace
+
+std::string usage( std::string_view executableName ) {
 	std::string text;
 	text += "Usage:\n";
 	text += "  ";
@@ -42,36 +107,19 @@ std::string CliParser::usage( std::string_view executableName ) const {
 	return text;
 }
 
-std::string CliParser::requireValue( std::span< const std::string > args, std::size_t& index,
-                                     std::string_view option ) {
-	if ( index + 1 >= args.size() ) {
-		throw std::runtime_error( "Missing value for option " + std::string( option ) );
-	}
-	return args[ ++index ];
-}
-
-CliParseResult CliParser::parse( std::span< const std::string > args ) const {
-	CliParseResult result;
-
+CliParseResult parse( std::span< const std::string > args ) {
 	if ( args.size() <= 1 ) {
-		result.mode    = CliMode::Error;
-		result.message = "Missing log file path.";
-		return result;
+		return { .mode = CliMode::Error, .message = "Missing log file path." };
 	}
 
 	try {
 		CliOptions options;
-		std::optional< std::chrono::sys_seconds > from;
-		std::optional< std::chrono::sys_seconds > to;
-		std::optional< std::chrono::sys_seconds > exactTimestamp;
+		RawTimeArgs times;
 
-		for ( std::size_t index = 1; index < args.size(); ++index ) {
-			const std::string& arg = args[ index ];
+		for ( std::size_t i = 1; i < args.size(); ++i ) {
+			const std::string& arg = args[ i ];
 
-			if ( arg == "--help" ) {
-				result.mode = CliMode::ShowHelp;
-				return result;
-			}
+			if ( arg == "--help" ) return { .mode = CliMode::ShowHelp };
 
 			if ( !arg.starts_with( "--" ) ) {
 				if ( !options.logFile.empty() ) {
@@ -79,62 +127,17 @@ CliParseResult CliParser::parse( std::span< const std::string > args ) const {
 					                          "' and '" + arg + "'" );
 				}
 				options.logFile = arg;
-				continue;
-			}
-
-			if ( arg == "--level" ) {
-				options.query.level = parseLogLevel( requireValue( args, index, arg ) );
-			} else if ( arg == "--source" ) {
-				options.query.source = requireValue( args, index, arg );
-			} else if ( arg == "--message" ) {
-				options.query.messageContains = requireValue( args, index, arg );
-			} else if ( arg == "--case-sensitive" ) {
-				options.query.messageCaseSensitive = true;
-			} else if ( arg == "--from" ) {
-				from = LogParser::parseTimestamp( requireValue( args, index, arg ) );
-			} else if ( arg == "--to" ) {
-				to = LogParser::parseTimestamp( requireValue( args, index, arg ) );
-			} else if ( arg == "--timestamp" ) {
-				exactTimestamp = LogParser::parseTimestamp( requireValue( args, index, arg ) );
-			} else if ( arg == "--count" ) {
-				options.countOnly = true;
 			} else {
-				throw std::runtime_error( "Unknown option: " + arg );
+				handleOption( arg, args, i, options, times );
 			}
 		}
 
-		if ( options.logFile.empty() ) {
-			throw std::runtime_error( "Missing log file path." );
-		}
+		validateAndFinalize( options, times );
+		return { .mode = CliMode::Execute, .options = std::move( options ) };
 
-		if ( options.query.messageCaseSensitive && !options.query.messageContains.has_value() ) {
-			throw std::runtime_error( "Option --case-sensitive requires --message." );
-		}
-
-		if ( exactTimestamp.has_value() && ( from.has_value() || to.has_value() ) ) {
-			throw std::runtime_error( "Use either --timestamp or --from/--to, not both." );
-		}
-
-		if ( exactTimestamp.has_value() ) {
-			options.query.timeRange = TimeRange{ .from = *exactTimestamp, .to = *exactTimestamp };
-		} else if ( from.has_value() || to.has_value() ) {
-			if ( !from.has_value() || !to.has_value() ) {
-				throw std::runtime_error( "Both --from and --to must be provided together." );
-			}
-			if ( *from > *to ) {
-				throw std::runtime_error( "Invalid time range: --from must be earlier than or equal to --to." );
-			}
-			options.query.timeRange = TimeRange{ .from = *from, .to = *to };
-		}
-
-		result.mode    = CliMode::Execute;
-		result.options = std::move( options );
-		return result;
 	} catch ( const std::exception& ex ) {
-		result.mode    = CliMode::Error;
-		result.message = ex.what();
-		return result;
+		return { .mode = CliMode::Error, .message = ex.what() };
 	}
 }
 
-}  // namespace task3
+}  // namespace task3::CliParser

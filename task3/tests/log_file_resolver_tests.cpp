@@ -117,8 +117,7 @@ TEST( LogFileResolverTests, DetailedResolutionReportsTriedCandidatesForMissingFi
 }
 
 TEST( CliParserTests, UsageMentionsConvenientDataLookup ) {
-	CliParser parser;
-	const std::string usage = parser.usage( "task3" );
+	const std::string usage = CliParser::usage( "task3" );
 
 	EXPECT_NE( usage.find( "just a file name" ), std::string::npos );
 	EXPECT_NE( usage.find( "data/<file>" ), std::string::npos );

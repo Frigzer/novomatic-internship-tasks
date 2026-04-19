@@ -30,7 +30,6 @@ private:
 
 	std::ostream& output_;
 	std::ostream& error_;
-	CliParser parser_;
 	LogFileResolver fileResolver_;
 };
 

@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-namespace task3 {
+namespace task3::CliParser {
 
 enum class CliMode : std::uint8_t { Execute, ShowHelp, Error };
 
@@ -16,14 +16,10 @@ struct CliParseResult {
 	std::string message;
 };
 
-class CliParser {
-public:
-	[[nodiscard]] CliParseResult parse( std::span< const std::string > args ) const;
-	[[nodiscard]] std::string usage( std::string_view executableName ) const;
+[[nodiscard]] CliParseResult parse( std::span< const std::string > args );
+[[nodiscard]] std::string usage( std::string_view executableName );
 
-private:
-	[[nodiscard]] static std::string requireValue( std::span< const std::string > args, std::size_t& index,
-	                                               std::string_view option );
-};
+[[nodiscard]] static std::string requireValue( std::span< const std::string > args, std::size_t& index,
+                                               std::string_view option );
 
-}  // namespace task3
+}  // namespace task3::CliParser
