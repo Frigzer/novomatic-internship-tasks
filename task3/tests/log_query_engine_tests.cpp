@@ -8,36 +8,67 @@
 namespace task3 {
 namespace {
 
-using namespace std::chrono;
+using std::chrono::day;
+using std::chrono::hours;
+using std::chrono::minutes;
+using std::chrono::month;
+using std::chrono::seconds;
+using std::chrono::sys_days;
+using std::chrono::sys_seconds;
+using std::chrono::year;
 
-std::chrono::sys_seconds ts( int year, unsigned month, unsigned day, int hour, int minute, int second ) {
-	return sys_days{ std::chrono::year{ year } / month / day } + hours{ hour } + minutes{ minute } + seconds{ second };
+sys_seconds ts( int y, unsigned m, unsigned d, unsigned h, unsigned min, unsigned s ) {
+	return sys_days{ year{ y } / month{ m } / day{ d } } + hours{ h } + minutes{ min } + seconds{ s };
 }
 
 std::vector< LogEntry > makeSampleEntries() {
-	return { { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Info, "AuthService", "User logged in successfully",
-	           "[2023-10-25T10:00:00] [INFO] [AuthService] User logged in successfully" },
+	return { { .timestamp = ts( 2023, 10, 25, 10, 0, 0 ),
+	           .level     = LogLevel::Info,
+	           .source    = "AuthService",
+	           .message   = "User logged in successfully",
+	           .raw_line  = "[2023-10-25T10:00:00] [INFO] [AuthService] User logged in successfully" },
 
-	         { ts( 2023, 10, 25, 10, 5, 12 ), LogLevel::Error, "Database", "Connection timeout",
-	           "[2023-10-25T10:05:12] [ERROR] [Database] Connection timeout" },
+	         { .timestamp = ts( 2023, 10, 25, 10, 5, 12 ),
+	           .level     = LogLevel::Error,
+	           .source    = "Database",
+	           .message   = "Connection timeout",
+	           .raw_line  = "[2023-10-25T10:05:12] [ERROR] [Database] Connection timeout" },
 
-	         { ts( 2023, 10, 25, 10, 15, 30 ), LogLevel::Warn, "AuthService", "Multiple failed login attempts",
-	           "[2023-10-25T10:15:30] [WARN] [AuthService] Multiple failed login attempts" },
+	         { .timestamp = ts( 2023, 10, 25, 10, 15, 30 ),
+	           .level     = LogLevel::Warn,
+	           .source    = "AuthService",
+	           .message   = "Multiple failed login attempts",
+	           .raw_line  = "[2023-10-25T10:15:30] [WARN] [AuthService] Multiple failed login attempts" },
 
-	         { ts( 2023, 10, 25, 10, 20, 0 ), LogLevel::Error, "Payment", "Transaction rejected: insufficient funds",
-	           "[2023-10-25T10:20:00] [ERROR] [Payment] Transaction rejected: insufficient funds" },
+	         { .timestamp = ts( 2023, 10, 25, 10, 20, 0 ),
+	           .level     = LogLevel::Error,
+	           .source    = "Payment",
+	           .message   = "Transaction rejected: insufficient funds",
+	           .raw_line  = "[2023-10-25T10:20:00] [ERROR] [Payment] Transaction rejected: insufficient funds" },
 
-	         { ts( 2023, 10, 25, 10, 25, 0 ), LogLevel::Info, "Payment", "Transaction 12345 processed",
-	           "[2023-10-25T10:25:00] [INFO] [Payment] Transaction 12345 processed" } };
+	         { .timestamp = ts( 2023, 10, 25, 10, 25, 0 ),
+	           .level     = LogLevel::Info,
+	           .source    = "Payment",
+	           .message   = "Transaction 12345 processed",
+	           .raw_line  = "[2023-10-25T10:25:00] [INFO] [Payment] Transaction 12345 processed" } };
 }
 
 std::vector< LogEntry > makeUnsortedEntries() {
-	return { { ts( 2023, 10, 25, 10, 20, 0 ), LogLevel::Error, "Payment", "Third",
-	           "[2023-10-25T10:20:00] [ERROR] [Payment] Third" },
-	         { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Info, "AuthService", "First",
-	           "[2023-10-25T10:00:00] [INFO] [AuthService] First" },
-	         { ts( 2023, 10, 25, 10, 5, 12 ), LogLevel::Error, "Database", "Second",
-	           "[2023-10-25T10:05:12] [ERROR] [Database] Second" } };
+	return { { .timestamp = ts( 2023, 10, 25, 10, 20, 0 ),
+	           .level     = LogLevel::Error,
+	           .source    = "Payment",
+	           .message   = "Third",
+	           .raw_line  = "[2023-10-25T10:20:00] [ERROR] [Payment] Third" },
+	         { .timestamp = ts( 2023, 10, 25, 10, 0, 0 ),
+	           .level     = LogLevel::Info,
+	           .source    = "AuthService",
+	           .message   = "First",
+	           .raw_line  = "[2023-10-25T10:00:00] [INFO] [AuthService] First" },
+	         { .timestamp = ts( 2023, 10, 25, 10, 5, 12 ),
+	           .level     = LogLevel::Error,
+	           .source    = "Database",
+	           .message   = "Second",
+	           .raw_line  = "[2023-10-25T10:05:12] [ERROR] [Database] Second" } };
 }
 
 }  // namespace
@@ -87,7 +118,7 @@ TEST( LogQueryEngineTests, FiltersByInclusiveTimeRange ) {
 	LogQueryEngine engine( entries );
 
 	LogQuery query;
-	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 5, 12 ), ts( 2023, 10, 25, 10, 20, 0 ) };
+	query.timeRange = TimeRange{ .from = ts( 2023, 10, 25, 10, 5, 12 ), .to = ts( 2023, 10, 25, 10, 20, 0 ) };
 
 	const auto results = engine.execute( query );
 
@@ -103,7 +134,7 @@ TEST( LogQueryEngineTests, FiltersByLevelAndTimeRange ) {
 
 	LogQuery query;
 	query.level     = LogLevel::Error;
-	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 0, 0 ), ts( 2023, 10, 25, 10, 10, 0 ) };
+	query.timeRange = TimeRange{ .from = ts( 2023, 10, 25, 10, 0, 0 ), .to = ts( 2023, 10, 25, 10, 10, 0 ) };
 
 	const auto results = engine.execute( query );
 
@@ -133,7 +164,7 @@ TEST( LogQueryEngineTests, FiltersByCombinedCriteria ) {
 	query.level           = LogLevel::Error;
 	query.source          = "Payment";
 	query.messageContains = "insufficient";
-	query.timeRange       = TimeRange{ ts( 2023, 10, 25, 10, 10, 0 ), ts( 2023, 10, 25, 10, 25, 0 ) };
+	query.timeRange       = TimeRange{ .from = ts( 2023, 10, 25, 10, 10, 0 ), .to = ts( 2023, 10, 25, 10, 25, 0 ) };
 
 	const auto results = engine.execute( query );
 
@@ -157,7 +188,7 @@ TEST( LogQueryEngineTests, SupportsExactTimestampUsingSinglePointRange ) {
 	LogQueryEngine engine( entries );
 
 	LogQuery query;
-	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 15, 30 ), ts( 2023, 10, 25, 10, 15, 30 ) };
+	query.timeRange = TimeRange{ .from = ts( 2023, 10, 25, 10, 15, 30 ), .to = ts( 2023, 10, 25, 10, 15, 30 ) };
 
 	const auto results = engine.execute( query );
 
@@ -171,7 +202,7 @@ TEST( LogQueryEngineTests, ReturnsEmptyForReversedTimeRange ) {
 	LogQueryEngine engine( entries );
 
 	LogQuery query;
-	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 30, 0 ), ts( 2023, 10, 25, 10, 0, 0 ) };
+	query.timeRange = TimeRange{ .from = ts( 2023, 10, 25, 10, 30, 0 ), .to = ts( 2023, 10, 25, 10, 0, 0 ) };
 
 	EXPECT_TRUE( engine.execute( query ).empty() );
 }
@@ -190,13 +221,12 @@ TEST( LogQueryEngineTests, PartialMessageMatchIsCaseInsensitive ) {
 	EXPECT_EQ( results[ 1 ]->source, "Payment" );
 }
 
-
 TEST( LogQueryEngineTests, CanUseCaseSensitiveMessageMatchingWhenRequested ) {
 	const auto entries = makeSampleEntries();
 	LogQueryEngine engine( entries );
 
 	LogQuery query;
-	query.messageContains     = "transaction";
+	query.messageContains      = "transaction";
 	query.messageCaseSensitive = true;
 
 	const auto results = engine.execute( query );
@@ -222,7 +252,7 @@ TEST( LogQueryEngineTests, SupportsUnsortedInputWithoutMissingTimeRangeResults )
 	LogQueryEngine engine( entries );
 
 	LogQuery query;
-	query.timeRange = TimeRange{ ts( 2023, 10, 25, 10, 0, 0 ), ts( 2023, 10, 25, 10, 5, 12 ) };
+	query.timeRange = TimeRange{ .from = ts( 2023, 10, 25, 10, 0, 0 ), .to = ts( 2023, 10, 25, 10, 5, 12 ) };
 
 	const auto results = engine.execute( query );
 
@@ -232,10 +262,21 @@ TEST( LogQueryEngineTests, SupportsUnsortedInputWithoutMissingTimeRangeResults )
 }
 
 TEST( LogQueryEngineTests, PreservesOriginalOrderForEqualTimestamps ) {
-	std::vector< LogEntry > entries{
-	    { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Error, "A", "alpha", "[2023-10-25T10:00:00] [ERROR] [A] alpha" },
-	    { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Info, "B", "beta", "[2023-10-25T10:00:00] [INFO] [B] beta" },
-	    { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Warn, "C", "gamma", "[2023-10-25T10:00:00] [WARN] [C] gamma" } };
+	std::vector< LogEntry > entries{ { .timestamp = ts( 2023, 10, 25, 10, 0, 0 ),
+	                                   .level     = LogLevel::Error,
+	                                   .source    = "A",
+	                                   .message   = "alpha",
+	                                   .raw_line  = "[2023-10-25T10:00:00] [ERROR] [A] alpha" },
+	                                 { .timestamp = ts( 2023, 10, 25, 10, 0, 0 ),
+	                                   .level     = LogLevel::Info,
+	                                   .source    = "B",
+	                                   .message   = "beta",
+	                                   .raw_line  = "[2023-10-25T10:00:00] [INFO] [B] beta" },
+	                                 { .timestamp = ts( 2023, 10, 25, 10, 0, 0 ),
+	                                   .level     = LogLevel::Warn,
+	                                   .source    = "C",
+	                                   .message   = "gamma",
+	                                   .raw_line  = "[2023-10-25T10:00:00] [WARN] [C] gamma" } };
 
 	LogQueryEngine engine( entries );
 	const auto results = engine.execute( LogQuery{} );
@@ -247,14 +288,26 @@ TEST( LogQueryEngineTests, PreservesOriginalOrderForEqualTimestamps ) {
 }
 
 TEST( LogQueryEngineTests, PreservesOriginalOrderForEqualTimestampsAfterIndexedFiltering ) {
-	std::vector< LogEntry > entries{ { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Error, "Auth", "first timeout",
-	                                   "[2023-10-25T10:00:00] [ERROR] [Auth] first timeout" },
-	                                 { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Error, "Billing", "second timeout",
-	                                   "[2023-10-25T10:00:00] [ERROR] [Billing] second timeout" },
-	                                 { ts( 2023, 10, 25, 10, 0, 0 ), LogLevel::Error, "Cache", "third timeout",
-	                                   "[2023-10-25T10:00:00] [ERROR] [Cache] third timeout" },
-	                                 { ts( 2023, 10, 25, 10, 1, 0 ), LogLevel::Info, "Other", "later",
-	                                   "[2023-10-25T10:01:00] [INFO] [Other] later" } };
+	std::vector< LogEntry > entries{ { .timestamp = ts( 2023, 10, 25, 10, 0, 0 ),
+	                                   .level     = LogLevel::Error,
+	                                   .source    = "Auth",
+	                                   .message   = "first timeout",
+	                                   .raw_line  = "[2023-10-25T10:00:00] [ERROR] [Auth] first timeout" },
+	                                 { .timestamp = ts( 2023, 10, 25, 10, 0, 0 ),
+	                                   .level     = LogLevel::Error,
+	                                   .source    = "Billing",
+	                                   .message   = "second timeout",
+	                                   .raw_line  = "[2023-10-25T10:00:00] [ERROR] [Billing] second timeout" },
+	                                 { .timestamp = ts( 2023, 10, 25, 10, 0, 0 ),
+	                                   .level     = LogLevel::Error,
+	                                   .source    = "Cache",
+	                                   .message   = "third timeout",
+	                                   .raw_line  = "[2023-10-25T10:00:00] [ERROR] [Cache] third timeout" },
+	                                 { .timestamp = ts( 2023, 10, 25, 10, 1, 0 ),
+	                                   .level     = LogLevel::Info,
+	                                   .source    = "Other",
+	                                   .message   = "later",
+	                                   .raw_line  = "[2023-10-25T10:01:00] [INFO] [Other] later" } };
 
 	LogQueryEngine engine( entries );
 

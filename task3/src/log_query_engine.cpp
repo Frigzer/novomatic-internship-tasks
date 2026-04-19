@@ -36,7 +36,7 @@ struct EntryPtrTimestampLess {
 }
 
 [[nodiscard]] bool containsCaseSensitive( std::string_view text, std::string_view needle ) noexcept {
-	return text.find( needle ) != std::string_view::npos;
+	return text.contains( needle );
 }
 
 }  // namespace
@@ -44,7 +44,7 @@ struct EntryPtrTimestampLess {
 LogQueryEngine::LogQueryEngine( std::span< const LogEntry > entries ) : entries_( entries ) {
 	orderedByTimestamp_.reserve( entries_.size() );
 	for ( const LogEntry& entry : entries_ ) {
-		auto* ptr = &entry;
+		const auto* ptr = &entry;
 		orderedByTimestamp_.push_back( ptr );
 		byLevel_[ entry.level ].push_back( ptr );
 		bySource_[ entry.source ].push_back( ptr );

@@ -12,15 +12,22 @@
 namespace task3 {
 namespace {
 
-using namespace std::chrono;
+using std::chrono::day;
+using std::chrono::hours;
+using std::chrono::minutes;
+using std::chrono::month;
+using std::chrono::seconds;
+using std::chrono::sys_days;
+using std::chrono::sys_seconds;
+using std::chrono::year;
 
-std::chrono::sys_seconds ts( int year, unsigned month, unsigned day, int hour, int minute, int second ) {
-	return sys_days{ std::chrono::year{ year } / month / day } + hours{ hour } + minutes{ minute } + seconds{ second };
+sys_seconds ts( int y, unsigned m, unsigned d, unsigned h, unsigned min, unsigned s ) {
+	return sys_days{ year{ y } / month{ m } / day{ d } } + hours{ h } + minutes{ min } + seconds{ s };
 }
 
 class ScopedTempFile {
 public:
-	explicit ScopedTempFile( std::string contents ) {
+	explicit ScopedTempFile( const std::string& contents ) {
 		static std::atomic< int > counter{ 0 };
 		path_ = std::filesystem::temp_directory_path() /
 		        ( "task3_log_parser_tests_" + std::to_string( counter.fetch_add( 1 ) ) + ".log" );

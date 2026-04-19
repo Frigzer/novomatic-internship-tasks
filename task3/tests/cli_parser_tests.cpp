@@ -56,7 +56,6 @@ TEST( CliParserTests, ParsesExactTimestampIntoSinglePointTimeRange ) {
 	EXPECT_EQ( result.options.query.timeRange->from, result.options.query.timeRange->to );
 }
 
-
 TEST( CliParserTests, EnablesCaseSensitiveMessageSearch ) {
 	CliParser parser;
 	const std::vector< std::string > args{ "task3", "logs.txt", "--message", "Timeout", "--case-sensitive" };
