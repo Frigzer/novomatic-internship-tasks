@@ -31,12 +31,38 @@ struct EntryPtrTimestampLess {
 		return true;
 	}
 
-	const auto it = std::search( text.begin(), text.end(), needle.begin(), needle.end(), iequals );
-	return it != text.end();
+	const auto found = std::ranges::search( text, needle, iequals );
+	return found.begin() != std::ranges::end( text );
 }
 
 [[nodiscard]] bool containsCaseSensitive( std::string_view text, std::string_view needle ) noexcept {
 	return text.contains( needle );
+}
+
+bool matches( const LogEntry& entry, const LogQuery& query ) {
+	if ( query.level.has_value() && entry.level != *query.level ) {
+		return false;
+	}
+
+	if ( query.source.has_value() && entry.source != *query.source ) {
+		return false;
+	}
+
+	if ( query.messageContains.has_value() ) {
+		const bool contains = query.messageCaseSensitive
+		                          ? containsCaseSensitive( entry.message, *query.messageContains )
+		                          : containsCaseInsensitive( entry.message, *query.messageContains );
+		if ( !contains ) {
+			return false;
+		}
+	}
+
+	if ( query.timeRange.has_value() &&
+	     ( entry.timestamp < query.timeRange->from || entry.timestamp > query.timeRange->to ) ) {
+		return false;
+	}
+
+	return true;
 }
 
 }  // namespace
@@ -74,8 +100,8 @@ std::vector< const LogEntry* > LogQueryEngine::execute( const LogQuery& query ) 
 		}
 	}
 
-	EntryList::const_iterator timeBegin = orderedByTimestamp_.begin();
-	EntryList::const_iterator timeEnd   = orderedByTimestamp_.end();
+	auto timeBegin = orderedByTimestamp_.begin();
+	auto timeEnd   = orderedByTimestamp_.end();
 	if ( query.timeRange.has_value() ) {
 		timeBegin = std::lower_bound( orderedByTimestamp_.begin(), orderedByTimestamp_.end(), query.timeRange->from,
 		                              EntryPtrTimestampLess{} );
@@ -83,7 +109,7 @@ std::vector< const LogEntry* > LogQueryEngine::execute( const LogQuery& query ) 
 		    std::upper_bound( timeBegin, orderedByTimestamp_.end(), query.timeRange->to, EntryPtrTimestampLess{} );
 	}
 
-	const std::size_t timeCandidateCount = static_cast< std::size_t >( std::distance( timeBegin, timeEnd ) );
+	const auto timeCandidateCount = static_cast< std::size_t >( std::distance( timeBegin, timeEnd ) );
 	const std::size_t indexedCandidateCount =
 	    indexedCandidates != nullptr ? indexedCandidates->size() : std::numeric_limits< std::size_t >::max();
 
@@ -108,32 +134,6 @@ std::vector< const LogEntry* > LogQueryEngine::execute( const LogQuery& query ) 
 	}
 
 	return results;
-}
-
-bool LogQueryEngine::matches( const LogEntry& entry, const LogQuery& query ) const {
-	if ( query.level.has_value() && entry.level != *query.level ) {
-		return false;
-	}
-
-	if ( query.source.has_value() && entry.source != *query.source ) {
-		return false;
-	}
-
-	if ( query.messageContains.has_value() ) {
-		const bool contains = query.messageCaseSensitive
-		                          ? containsCaseSensitive( entry.message, *query.messageContains )
-		                          : containsCaseInsensitive( entry.message, *query.messageContains );
-		if ( !contains ) {
-			return false;
-		}
-	}
-
-	if ( query.timeRange.has_value() &&
-	     ( entry.timestamp < query.timeRange->from || entry.timestamp > query.timeRange->to ) ) {
-		return false;
-	}
-
-	return true;
 }
 
 }  // namespace task3

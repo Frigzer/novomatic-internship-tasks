@@ -53,7 +53,7 @@ namespace {
 [[nodiscard]] int parseInt( std::string_view text ) {
 	int value         = 0;
 	const char* begin = text.data();
-	const char* end   = text.data() + text.size();
+	const char* end   = text.data() + text.size();  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 	const auto [ ptr, ec ] = std::from_chars( begin, end, value );
 	if ( ec != std::errc{} || ptr != end ) {
@@ -90,27 +90,36 @@ LogLevel parseLogLevel( std::string_view text ) {
 }
 
 std::chrono::sys_seconds LogParser::parseTimestamp( std::string_view text ) {
+	// NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 	if ( text.size() != 19 || text[ 4 ] != '-' || text[ 7 ] != '-' || text[ 10 ] != 'T' || text[ 13 ] != ':' ||
-	     text[ 16 ] != ':' ) {
+	     text[ 16 ] != ':' ) {  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 		throw std::runtime_error( "Invalid timestamp format: " + std::string( text ) );
 	}
 
-	const int parsedYear       = parseInt( text.substr( 0, 4 ) );
-	const unsigned parsedMonth = static_cast< unsigned >( parseInt( text.substr( 5, 2 ) ) );
-	const unsigned parsedDay   = static_cast< unsigned >( parseInt( text.substr( 8, 2 ) ) );
-	const int parsedHour       = parseInt( text.substr( 11, 2 ) );
-	const int parsedMinute     = parseInt( text.substr( 14, 2 ) );
-	const int parsedSecond     = parseInt( text.substr( 17, 2 ) );
+	const int parsedYear   = parseInt( text.substr( 0, 4 ) );
+	const auto parsedMonth = static_cast< unsigned >( parseInt( text.substr( 5, 2 ) ) );
+	const auto parsedDay   = static_cast< unsigned >( parseInt( text.substr( 8, 2 ) ) );
+	const int parsedHour   = parseInt( text.substr( 11, 2 ) );
+	const int parsedMinute = parseInt( text.substr( 14, 2 ) );
+	const int parsedSecond = parseInt( text.substr( 17, 2 ) );
 
-	using namespace std::chrono;
+	using std::chrono::day;
+	using std::chrono::hours;
+	using std::chrono::minutes;
+	using std::chrono::month;
+	using std::chrono::seconds;
+	using std::chrono::sys_days;
+	using std::chrono::sys_seconds;
+	using std::chrono::year;
 
-	const year_month_day ymd{ year{ parsedYear }, month{ parsedMonth }, day{ parsedDay } };
+	const std::chrono::year_month_day ymd{ year{ parsedYear }, month{ parsedMonth }, day{ parsedDay } };
 	if ( !ymd.ok() ) {
 		throw std::runtime_error( "Invalid calendar date: " + std::string( text ) );
 	}
 
+	// NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 	if ( parsedHour < 0 || parsedHour > 23 || parsedMinute < 0 || parsedMinute > 59 || parsedSecond < 0 ||
-	     parsedSecond > 59 ) {
+	     parsedSecond > 59 ) {  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 		throw std::runtime_error( "Invalid time value: " + std::string( text ) );
 	}
 
