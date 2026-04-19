@@ -5,7 +5,6 @@
 #include "ticket_server.hpp"
 #include "ticket_server_host.hpp"
 
-#include <atomic>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -21,7 +20,10 @@
 namespace task1 {
 namespace {
 
-std::atomic_bool g_keep_running{ true };
+volatile std::sig_atomic_t& keepRunningFlag() {
+	static volatile std::sig_atomic_t value = 1;
+	return value;
+}
 
 std::filesystem::path defaultDataFile() {
 	return ( paths::dataDir / "server_seed.json" ).lexically_normal();
@@ -51,10 +53,16 @@ std::optional< std::uint16_t > parsePort( const std::string& value ) {
 	}
 }
 
+void printHelp() {
+	std::cout << "Usage: task1_server [--port PORT] [--data FILE_OR_PATH]\n";
+	std::cout << "Default data file: " << defaultDataFile().string() << '\n';
+	std::cout << "Relative values passed to --data are resolved inside: " << paths::dataDir.string() << '\n';
+}
+
 }  // namespace
 
-ServerConsoleApp::ServerConsoleApp( int argc, char* argv[] )
-    : argc_( argc ), argv_( argv ), port_( defaultPort ), data_file_path_( defaultDataFile() ) {}
+ServerConsoleApp::ServerConsoleApp( std::span< char* const > args )
+    : args_( args ), data_file_path_( defaultDataFile() ) {}
 
 int ServerConsoleApp::run() {
 	parseArguments();
@@ -66,9 +74,11 @@ int ServerConsoleApp::run() {
 	const auto seed_data = ServerSeedDataLoader::loadFromFile( data_file_path_ );
 
 	registerSignalHandlers();
-	g_keep_running.store( true );
+	keepRunningFlag() = 1;
 
-	TicketServer server( seed_data.tickets, seed_data.cashbox, std::chrono::seconds( 60 ) );
+	TicketServer server(
+	    seed_data.tickets, seed_data.cashbox,
+	    std::chrono::seconds( 60 ) );  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 	TicketServerHost host( server, port_ );
 
 	host.start();
@@ -78,8 +88,9 @@ int ServerConsoleApp::run() {
 	std::cout << "  task1 --host 127.0.0.1 --port " << host.port() << '\n';
 	std::cout << "Press Ctrl+C to stop the server.\n";
 
-	while ( g_keep_running.load() ) {
-		std::this_thread::sleep_for( std::chrono::milliseconds( 200 ) );
+	while ( keepRunningFlag() != 0 ) {
+		std::this_thread::sleep_for( std::chrono::milliseconds(
+		    200 ) );  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 	}
 
 	std::cout << "Stopping server...\n";
@@ -88,19 +99,19 @@ int ServerConsoleApp::run() {
 }
 
 void ServerConsoleApp::parseArguments() {
-	for ( int index = 1; index < argc_; ++index ) {
-		const std::string_view argument = argv_[ index ];
+	for ( std::size_t index = 1; index < args_.size(); ++index ) {
+		const std::string_view argument = args_[ index ];
 		if ( argument == "--help" || argument == "-h" ) {
 			show_help_ = true;
 			return;
 		}
 
 		if ( argument == "--port" ) {
-			if ( index + 1 >= argc_ ) {
+			if ( index + 1 >= args_.size() ) {
 				throw std::runtime_error( "Missing value after --port" );
 			}
 
-			auto parsed_port = parsePort( argv_[ ++index ] );
+			auto parsed_port = parsePort( args_[ ++index ] );
 			if ( !parsed_port.has_value() ) {
 				throw std::runtime_error( "Invalid port value" );
 			}
@@ -109,11 +120,11 @@ void ServerConsoleApp::parseArguments() {
 		}
 
 		if ( argument == "--data" ) {
-			if ( index + 1 >= argc_ ) {
+			if ( index + 1 >= args_.size() ) {
 				throw std::runtime_error( "Missing value after --data" );
 			}
 
-			data_file_path_ = resolveDataFilePath( argv_[ ++index ] );
+			data_file_path_ = resolveDataFilePath( args_[ ++index ] );
 			continue;
 		}
 
@@ -125,18 +136,12 @@ bool ServerConsoleApp::shouldPrintHelp() const noexcept {
 	return show_help_;
 }
 
-void ServerConsoleApp::printHelp() const {
-	std::cout << "Usage: task1_server [--port PORT] [--data FILE_OR_PATH]\n";
-	std::cout << "Default data file: " << defaultDataFile().string() << '\n';
-	std::cout << "Relative values passed to --data are resolved inside: " << paths::dataDir.string() << '\n';
-}
-
 void ServerConsoleApp::registerSignalHandlers() {
 	std::signal( SIGINT, &ServerConsoleApp::onSignal );
 }
 
-void ServerConsoleApp::onSignal( int ) {
-	g_keep_running.store( false );
+void ServerConsoleApp::onSignal( int /*unused*/ ) {
+	keepRunningFlag() = 0;
 }
 
 }  // namespace task1

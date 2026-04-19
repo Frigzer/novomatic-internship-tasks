@@ -2,12 +2,13 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <span>
 
 namespace task1 {
 
 class ServerConsoleApp {
 public:
-	ServerConsoleApp( int argc, char* argv[] );
+	explicit ServerConsoleApp( std::span< char* const > args );
 
 	int run();
 
@@ -16,12 +17,10 @@ private:
 
 	void parseArguments();
 	[[nodiscard]] bool shouldPrintHelp() const noexcept;
-	void printHelp() const;
 	static void registerSignalHandlers();
 	static void onSignal( int signal_number );
 
-	int argc_{ 0 };
-	char** argv_{ nullptr };
+	std::span< char* const > args_;
 	std::uint16_t port_{ defaultPort };
 	std::filesystem::path data_file_path_{};
 	bool show_help_{ false };
