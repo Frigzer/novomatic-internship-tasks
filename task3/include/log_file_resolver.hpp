@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <vector>
 
-namespace task3 {
+namespace task3::LogFileResolver {
 
 struct FileResolutionResult {
 	std::filesystem::path resolved;
@@ -11,17 +11,7 @@ struct FileResolutionResult {
 	bool exists = false;
 };
 
-class LogFileResolver {
-public:
-	[[nodiscard]] std::filesystem::path resolve( const std::filesystem::path& input ) const;
-	[[nodiscard]] FileResolutionResult resolveDetailed( const std::filesystem::path& input ) const;
+[[nodiscard]] std::filesystem::path resolve( const std::filesystem::path& input );
+[[nodiscard]] FileResolutionResult resolveDetailed( const std::filesystem::path& input );
 
-private:
-	[[nodiscard]] static bool exists( const std::filesystem::path& candidate ) noexcept;
-	[[nodiscard]] static std::filesystem::path normalized( const std::filesystem::path& candidate );
-	[[nodiscard]] static bool isPlainFilename( const std::filesystem::path& input ) noexcept;
-	static void appendCandidate( std::vector< std::filesystem::path >& candidates,
-	                             const std::filesystem::path& candidate );
-};
-
-}  // namespace task3
+}  // namespace task3::LogFileResolver

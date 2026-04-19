@@ -2,7 +2,6 @@
 
 #include "cli_options.hpp"
 #include "log_entry.hpp"
-#include "log_file_resolver.hpp"
 
 #include <iostream>
 #include <ostream>
@@ -27,7 +26,6 @@ private:
 
 	std::ostream& output_;
 	std::ostream& error_;
-	LogFileResolver fileResolver_;
 };
 
 }  // namespace task3

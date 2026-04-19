@@ -5,34 +5,37 @@
 #include <system_error>
 #include <vector>
 
-namespace task3 {
+namespace task3::LogFileResolver {
 
-bool LogFileResolver::exists( const std::filesystem::path& candidate ) noexcept {
+namespace {
+
+bool fileExists( const std::filesystem::path& candidate ) noexcept {
 	std::error_code errorCode;
 	return std::filesystem::exists( candidate, errorCode );
 }
 
-std::filesystem::path LogFileResolver::normalized( const std::filesystem::path& candidate ) {
+std::filesystem::path normalized( const std::filesystem::path& candidate ) {
 	std::error_code errorCode;
-	const std::filesystem::path normalizedPath = std::filesystem::weakly_canonical( candidate, errorCode );
+	std::filesystem::path normalizedPath = std::filesystem::weakly_canonical( candidate, errorCode );
 	if ( !errorCode ) {
 		return normalizedPath;
 	}
 	return candidate.lexically_normal();
 }
 
-bool LogFileResolver::isPlainFilename( const std::filesystem::path& input ) noexcept {
+bool isPlainFilename( const std::filesystem::path& input ) noexcept {
 	return !input.empty() && !input.has_parent_path();
 }
 
-void LogFileResolver::appendCandidate( std::vector< std::filesystem::path >& candidates,
-                                       const std::filesystem::path& candidate ) {
+void appendCandidate( std::vector< std::filesystem::path >& candidates, const std::filesystem::path& candidate ) {
 	if ( std::ranges::find( candidates, candidate ) == candidates.end() ) {
 		candidates.push_back( candidate );
 	}
 }
 
-FileResolutionResult LogFileResolver::resolveDetailed( const std::filesystem::path& input ) const {
+}  // namespace
+
+FileResolutionResult resolveDetailed( const std::filesystem::path& input ) {
 	FileResolutionResult result;
 
 	if ( input.empty() ) {
@@ -43,7 +46,7 @@ FileResolutionResult LogFileResolver::resolveDetailed( const std::filesystem::pa
 	if ( input.is_absolute() ) {
 		result.resolved = normalized( input );
 		result.attempted.push_back( result.resolved );
-		result.exists = exists( input );
+		result.exists = fileExists( input );
 		return result;
 	}
 
@@ -51,7 +54,7 @@ FileResolutionResult LogFileResolver::resolveDetailed( const std::filesystem::pa
 	const std::filesystem::path currentDirectory = std::filesystem::current_path( errorCode );
 
 	std::vector< std::filesystem::path > candidates;
-	candidates.reserve( 5 );
+	candidates.reserve( 5 );  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 
 	if ( !errorCode ) {
 		appendCandidate( candidates, currentDirectory / input );
@@ -70,7 +73,7 @@ FileResolutionResult LogFileResolver::resolveDetailed( const std::filesystem::pa
 	for ( const auto& candidate : candidates ) {
 		const std::filesystem::path normalizedCandidate = normalized( candidate );
 		result.attempted.push_back( normalizedCandidate );
-		if ( exists( candidate ) ) {
+		if ( fileExists( candidate ) ) {
 			result.resolved = normalizedCandidate;
 			result.exists   = true;
 			return result;
@@ -86,8 +89,8 @@ FileResolutionResult LogFileResolver::resolveDetailed( const std::filesystem::pa
 	return result;
 }
 
-std::filesystem::path LogFileResolver::resolve( const std::filesystem::path& input ) const {
+std::filesystem::path resolve( const std::filesystem::path& input ) {
 	return resolveDetailed( input ).resolved;
 }
 
-}  // namespace task3
+}  // namespace task3::LogFileResolver

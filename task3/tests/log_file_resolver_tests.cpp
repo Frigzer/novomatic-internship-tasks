@@ -30,8 +30,7 @@ TEST( LogFileResolverTests, FallsBackToProjectDataDirectoryWhenNotFoundInCurrent
 		CurrentPathGuard guard;
 		std::filesystem::current_path( tempDir );
 
-		LogFileResolver resolver;
-		const std::filesystem::path resolved = resolver.resolve( "sample_logs.txt" );
+		const std::filesystem::path resolved = LogFileResolver::resolve( "sample_logs.txt" );
 
 		EXPECT_EQ( resolved, std::filesystem::weakly_canonical( paths::dataDir / "sample_logs.txt" ) );
 	}
@@ -49,8 +48,8 @@ TEST( LogFileResolverTests, ResolvesExistingRelativePathFromCurrentWorkingDirect
 		CurrentPathGuard guard;
 		std::filesystem::current_path( tempDir );
 
-		LogFileResolver resolver;
-		const std::filesystem::path resolved = resolver.resolve( std::filesystem::path( "nested" ) / "logs.txt" );
+		const std::filesystem::path resolved =
+		    LogFileResolver::resolve( std::filesystem::path( "nested" ) / "logs.txt" );
 
 		EXPECT_EQ( resolved, std::filesystem::weakly_canonical( tempDir / "nested" / "logs.txt" ) );
 	}
@@ -68,8 +67,7 @@ TEST( LogFileResolverTests, ResolvesFilenameFromCurrentWorkingDirectoryDataSubdi
 		CurrentPathGuard guard;
 		std::filesystem::current_path( tempDir );
 
-		LogFileResolver resolver;
-		const std::filesystem::path resolved = resolver.resolve( "runtime_logs.txt" );
+		const std::filesystem::path resolved = LogFileResolver::resolve( "runtime_logs.txt" );
 
 		EXPECT_EQ( resolved, std::filesystem::weakly_canonical( tempDir / "data" / "runtime_logs.txt" ) );
 	}
@@ -87,8 +85,7 @@ TEST( LogFileResolverTests, PrefersCurrentWorkingDirectoryDataOverProjectData ) 
 		CurrentPathGuard guard;
 		std::filesystem::current_path( tempDir );
 
-		LogFileResolver resolver;
-		const std::filesystem::path resolved = resolver.resolve( "sample_logs.txt" );
+		const std::filesystem::path resolved = LogFileResolver::resolve( "sample_logs.txt" );
 
 		EXPECT_EQ( resolved, std::filesystem::weakly_canonical( tempDir / "data" / "sample_logs.txt" ) );
 	}
@@ -105,8 +102,7 @@ TEST( LogFileResolverTests, DetailedResolutionReportsTriedCandidatesForMissingFi
 		CurrentPathGuard guard;
 		std::filesystem::current_path( tempDir );
 
-		LogFileResolver resolver;
-		const FileResolutionResult result = resolver.resolveDetailed( "does_not_exist.txt" );
+		const LogFileResolver::FileResolutionResult result = LogFileResolver::resolveDetailed( "does_not_exist.txt" );
 
 		EXPECT_FALSE( result.exists );
 		EXPECT_FALSE( result.attempted.empty() );

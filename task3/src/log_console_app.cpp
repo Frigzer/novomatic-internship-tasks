@@ -1,6 +1,7 @@
 #include "log_console_app.hpp"
 
 #include "cli_parser.hpp"
+#include "log_file_resolver.hpp"
 #include "log_query_engine.hpp"
 #include "log_store.hpp"
 
@@ -14,7 +15,7 @@ namespace task3 {
 
 namespace {
 
-std::string buildMissingFileMessage( const FileResolutionResult& resolution,
+std::string buildMissingFileMessage( const LogFileResolver::FileResolutionResult& resolution,
                                      const std::filesystem::path& requestedPath ) {
 	std::ostringstream message;
 	message << "Could not find log file '" << requestedPath.string() << "'.";
@@ -48,7 +49,7 @@ void LogConsoleApp::printEntries( std::ostream& out, std::span< const LogEntry* 
 
 int LogConsoleApp::execute( const CliOptions& options ) {
 	LogStore store;
-	const FileResolutionResult resolution = fileResolver_.resolveDetailed( options.logFile );
+	const LogFileResolver::FileResolutionResult resolution = LogFileResolver::resolveDetailed( options.logFile );
 	if ( !resolution.exists ) {
 		throw std::runtime_error( buildMissingFileMessage( resolution, options.logFile ) );
 	}
