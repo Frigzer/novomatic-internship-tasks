@@ -28,6 +28,7 @@ TEST( ConcurrencyTests, OnlyOneClientCanReserveLastTicket ) {
 	std::barrier start_line( thread_count );
 	std::vector< std::thread > threads;
 
+	threads.reserve( thread_count );
 	for ( int i = 0; i < thread_count; ++i ) {
 		threads.emplace_back( [ &server, &success_count, &start_line ]() {
 			start_line.arrive_and_wait();
@@ -69,6 +70,7 @@ TEST( ConcurrencyTests, NumberOfSuccessfulReservationsMatchesTicketPool ) {
 	std::barrier start_line( thread_count );
 	std::vector< std::thread > threads;
 
+	threads.reserve( thread_count );
 	for ( int i = 0; i < thread_count; ++i ) {
 		threads.emplace_back( [ &server, &success_count, &start_line ]() {
 			start_line.arrive_and_wait();
@@ -111,6 +113,7 @@ TEST( ConcurrencyTests, ConcurrentPurchasesDoNotOversellTickets ) {
 	std::barrier start_line( thread_count );
 	std::vector< std::thread > threads;
 
+	threads.reserve( thread_count );
 	for ( int i = 0; i < thread_count; ++i ) {
 		threads.emplace_back( [ &server, &success_count, &failure_count, &start_line, i ]() {
 			start_line.arrive_and_wait();

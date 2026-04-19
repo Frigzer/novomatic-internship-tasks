@@ -55,7 +55,7 @@ TEST( ChangeCalculatorTests, ReconstructionDoesNotExceedAvailableCoinCounts ) {
 	ASSERT_TRUE( result.has_value() );
 	EXPECT_EQ( result->total, 12 );
 
-	Money reconstructed_total = 0;
+	Money reconstructed_total    = 0;
 	std::size_t total_coin_count = 0;
 	for ( const auto& [ denomination, used_count ] : result->coins ) {
 		EXPECT_LE( static_cast< std::size_t >( used_count ), inventory.count( denomination ) );

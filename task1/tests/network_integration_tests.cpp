@@ -65,6 +65,7 @@ TEST( NetworkIntegrationTests, ConcurrentClientsDoNotOversellLastTicket ) {
 	std::barrier start_line( thread_count );
 	std::vector< std::thread > threads;
 
+	threads.reserve( thread_count );
 	for ( int index = 0; index < thread_count; ++index ) {
 		threads.emplace_back( [ port = host.port(), &success_count, &start_line ]() {
 			start_line.arrive_and_wait();
