@@ -31,27 +31,6 @@ cmake --build --preset conan-debug
 ctest --preset conan-debug
 ```
 
-### VS Code
-
-Projekt korzysta z **CMake presets generowanych przez Conana**.
-
-Ustaw w `.vscode/settings.json`:
-
-```json
-{
-  "cmake.useCMakePresets": "always"
-}
-```
-
-Potem:
-
-1. `conan install ...`
-2. `CMake: Select Configure Preset`
-3. `CMake: Select Build Preset`
-4. build
-
----
-
 ## Uwagi
 
 * Zawsze używaj:
