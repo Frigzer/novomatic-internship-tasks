@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cli_options.hpp"
-#include "cli_parser.hpp"
 #include "log_entry.hpp"
 #include "log_file_resolver.hpp"
 
@@ -22,8 +21,6 @@ public:
 private:
 	[[nodiscard]] int runWithArguments( std::span< const std::string > args );
 	[[nodiscard]] int execute( const CliOptions& options );
-	[[nodiscard]] std::string buildMissingFileMessage( const FileResolutionResult& resolution,
-	                                                   const std::filesystem::path& requestedPath ) const;
 
 	static std::vector< std::string > makeArguments( int argc, char** argv );
 	static void printEntries( std::ostream& out, std::span< const LogEntry* const > entries );

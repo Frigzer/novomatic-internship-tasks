@@ -1,34 +1,21 @@
 #include "log_console_app.hpp"
 
+#include "cli_parser.hpp"
 #include "log_query_engine.hpp"
 #include "log_store.hpp"
 
 #include <exception>
+#include <ranges>
 #include <sstream>
 #include <string_view>
 #include <vector>
 
 namespace task3 {
 
-LogConsoleApp::LogConsoleApp( std::ostream& output, std::ostream& error ) : output_( output ), error_( error ) {}
+namespace {
 
-std::vector< std::string > LogConsoleApp::makeArguments( int argc, char** argv ) {
-	std::vector< std::string > args;
-	args.reserve( static_cast< std::size_t >( argc ) );
-	for ( int i = 0; i < argc; ++i ) {
-		args.emplace_back( argv[ i ] );
-	}
-	return args;
-}
-
-void LogConsoleApp::printEntries( std::ostream& out, std::span< const LogEntry* const > entries ) {
-	for ( const LogEntry* entry : entries ) {
-		out << entry->raw_line << '\n';
-	}
-}
-
-std::string LogConsoleApp::buildMissingFileMessage( const FileResolutionResult& resolution,
-                                                    const std::filesystem::path& requestedPath ) const {
+std::string buildMissingFileMessage( const FileResolutionResult& resolution,
+                                     const std::filesystem::path& requestedPath ) {
 	std::ostringstream message;
 	message << "Could not find log file '" << requestedPath.string() << "'.";
 
@@ -40,6 +27,23 @@ std::string LogConsoleApp::buildMissingFileMessage( const FileResolutionResult& 
 	}
 
 	return message.str();
+}
+}  // namespace
+
+LogConsoleApp::LogConsoleApp( std::ostream& output, std::ostream& error ) : output_( output ), error_( error ) {}
+
+std::vector< std::string > LogConsoleApp::makeArguments( int argc, char** argv ) {
+	if ( argc <= 0 || argv == nullptr ) {
+		return {};
+	}
+
+	return std::views::counted( argv, argc ) | std::ranges::to< std::vector< std::string > >();
+}
+
+void LogConsoleApp::printEntries( std::ostream& out, std::span< const LogEntry* const > entries ) {
+	for ( const LogEntry* entry : entries ) {
+		out << entry->raw_line << '\n';
+	}
 }
 
 int LogConsoleApp::execute( const CliOptions& options ) {

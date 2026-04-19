@@ -19,7 +19,4 @@ struct CliParseResult {
 [[nodiscard]] CliParseResult parse( std::span< const std::string > args );
 [[nodiscard]] std::string usage( std::string_view executableName );
 
-[[nodiscard]] static std::string requireValue( std::span< const std::string > args, std::size_t& index,
-                                               std::string_view option );
-
 }  // namespace task3::CliParser
