@@ -49,7 +49,7 @@ TEST( ChangeCalculatorTests, ReturnsNulloptWhenChangeCannotBeMade ) {
 }
 
 TEST( ChangeCalculatorTests, ReconstructionDoesNotExceedAvailableCoinCounts ) {
-	CoinInventory inventory( { { 10, 2 }, { 4, 2 }, { 3, 3 }, { 1, 1 } } );
+	CoinInventory inventory( { { 5, 2 }, { 2, 1 }, { 1, 1 } } );
 	auto result = ChangeCalculator::computeMinimalCoinChange( 12, inventory );
 
 	ASSERT_TRUE( result.has_value() );
@@ -64,10 +64,10 @@ TEST( ChangeCalculatorTests, ReconstructionDoesNotExceedAvailableCoinCounts ) {
 	}
 
 	EXPECT_EQ( reconstructed_total, 12 );
-	EXPECT_EQ( total_coin_count, 4U );
-	EXPECT_EQ( result->coins.at( 4 ), 2 );
-	EXPECT_EQ( result->coins.at( 3 ), 1 );
-	EXPECT_EQ( result->coins.at( 1 ), 1 );
+	EXPECT_EQ( total_coin_count, 3U );
+	EXPECT_EQ( result->coins.at( 5 ), 2 );
+	EXPECT_EQ( result->coins.at( 2 ), 1 );
+	EXPECT_FALSE( result->coins.contains( 1 ) );
 }
 
 }  // namespace task1

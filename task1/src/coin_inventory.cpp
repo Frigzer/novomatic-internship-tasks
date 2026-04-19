@@ -1,18 +1,34 @@
 #include "coin_inventory.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <utility>
 
 namespace task1 {
 
+namespace {
+
+void validateCoinEntry( Money denomination, int count ) {
+	if ( denomination <= 0 ) {
+		throw std::invalid_argument( "Coin denomination must be positive" );
+	}
+	if ( !isSupportedCoinDenomination( denomination ) ) {
+		throw std::invalid_argument( "Unsupported coin denomination" );
+	}
+	if ( count < 0 ) {
+		throw std::invalid_argument( "Coin count cannot be negative" );
+	}
+}
+
+}  // namespace
+
+bool isSupportedCoinDenomination( Money denomination ) noexcept {
+	return std::ranges::contains( supportedCoinDenominations, denomination );
+}
+
 CoinInventory::CoinInventory( std::map< Money, int, std::greater<> > coins ) : coins_( std::move( coins ) ) {
-	for ( const auto& [ denomination, count ] : coins ) {
-		if ( denomination <= 0 ) {
-			throw std::invalid_argument( "Coin denomination must be positive" );
-		}
-		if ( count < 0 ) {
-			throw std::invalid_argument( "Coin count cannot be negative" );
-		}
+	for ( const auto& [ denomination, count ] : coins_ ) {
+		validateCoinEntry( denomination, count );
 	}
 }
 
@@ -21,12 +37,7 @@ const std::map< Money, int, std::greater<> >& CoinInventory::getCoins() const {
 }
 
 void CoinInventory::addCoin( Money denomination, int count ) {
-	if ( denomination <= 0 ) {
-		throw std::invalid_argument( "Coin denomination must be positive" );
-	}
-	if ( count < 0 ) {
-		throw std::invalid_argument( "Coin count cannot be negative" );
-	}
+	validateCoinEntry( denomination, count );
 	if ( count == 0 ) {
 		return;
 	}
@@ -41,7 +52,7 @@ void CoinInventory::addCoins( const CoinInventory& other ) {
 }
 
 bool CoinInventory::removeCoin( Money denomination, int count ) {
-	if ( denomination <= 0 || count <= 0 ) {
+	if ( denomination <= 0 || !isSupportedCoinDenomination( denomination ) || count <= 0 ) {
 		return false;
 	}
 
@@ -60,7 +71,7 @@ bool CoinInventory::removeCoin( Money denomination, int count ) {
 
 bool CoinInventory::removeCoins( const std::map< Money, int, std::greater<> >& coins ) {
 	for ( const auto& [ denomination, count ] : coins ) {
-		if ( denomination <= 0 || count < 0 ) {
+		if ( denomination <= 0 || !isSupportedCoinDenomination( denomination ) || count < 0 ) {
 			return false;
 		}
 

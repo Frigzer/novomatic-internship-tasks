@@ -2,7 +2,13 @@
 
 #include "models.hpp"
 
+#include <array>
+
 namespace task1 {
+
+inline constexpr std::array< Money, 9 > supportedCoinDenominations{ 1, 2, 5, 10, 20, 50, 100, 200, 500 };
+
+[[nodiscard]] bool isSupportedCoinDenomination( Money denomination ) noexcept;
 
 class CoinInventory {
 public:

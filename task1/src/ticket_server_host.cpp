@@ -4,8 +4,6 @@
 #include "ticket_server.hpp"
 
 #include <asio.hpp>
-
-#include <algorithm>
 #include <nlohmann/json.hpp>
 
 #include <atomic>
@@ -278,9 +276,7 @@ private:
 
 	void cleanupSessions() {
 		std::lock_guard< std::mutex > lock( sessions_mutex_ );
-		sessions_.erase( std::remove_if( sessions_.begin(), sessions_.end(),
-		                                 []( const auto& weak_session ) { return weak_session.expired(); } ),
-		                 sessions_.end() );
+		std::erase_if( sessions_, []( const auto& weak_session ) { return weak_session.expired(); } );
 	}
 
 	TicketServer& server_;

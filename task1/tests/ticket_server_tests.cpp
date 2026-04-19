@@ -184,4 +184,13 @@ TEST( TicketServerTests, CannotMakeChangeReturnsInsertedCoinsAndReleasesReservat
 	EXPECT_EQ( available[ 0 ].available_count, 1 );
 }
 
+TEST( TicketServerTests, CoinInventoryRejectsUnsupportedDenominationInConstructor ) {
+	EXPECT_THROW( CoinInventory( { { 25, 1 } } ), std::invalid_argument );
+}
+
+TEST( TicketServerTests, CoinInventoryRejectsUnsupportedDenominationInAddCoin ) {
+	CoinInventory inventory;
+	EXPECT_THROW( inventory.addCoin( 25 ), std::invalid_argument );
+}
+
 }  // namespace task1

@@ -68,6 +68,17 @@ void printMoney( const Money amount ) {
 	std::cout << std::setfill( ' ' );
 }
 
+std::string supportedCoinDenominationsText() {
+	std::ostringstream stream;
+	for ( std::size_t index = 0; index < supportedCoinDenominations.size(); ++index ) {
+		if ( index > 0 ) {
+			stream << ", ";
+		}
+		stream << supportedCoinDenominations[ index ];
+	}
+	return stream.str();
+}
+
 }  // namespace
 
 ConsoleClientApp::ConsoleClientApp( std::span< char* const > args ) : args_( args ) {}
@@ -329,8 +340,8 @@ void ConsoleClientApp::printPurchaseFailure( const PurchaseFailure& failure ) {
 }
 
 std::optional< CoinInventory > ConsoleClientApp::readInsertedCoins() {
-	std::cout << "Enter inserted coin denominations in grosz, one per line. Type 'done' when finished or 'cancel' to "
-	             "abort.\n";
+	std::cout << "Enter inserted coin denominations in grosz (" << supportedCoinDenominationsText()
+	          << "), one per line. Type 'done' when finished or 'cancel' to abort.\n";
 
 	std::map< Money, int, std::greater<> > inserted;
 	std::string line;
@@ -358,6 +369,10 @@ std::optional< CoinInventory > ConsoleClientApp::readInsertedCoins() {
 			const auto denomination = static_cast< Money >( std::stoll( line ) );
 			if ( denomination <= 0 ) {
 				std::cout << "Coin denomination must be positive.\n";
+				continue;
+			}
+			if ( !isSupportedCoinDenomination( denomination ) ) {
+				std::cout << "Unsupported coin denomination. Use one of: " << supportedCoinDenominationsText() << ".\n";
 				continue;
 			}
 			++inserted[ denomination ];
