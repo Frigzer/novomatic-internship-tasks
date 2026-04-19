@@ -106,7 +106,7 @@ bool TicketMachineClient::isRemote() const noexcept {
 }
 
 TicketServer& TicketMachineClient::localServer() const {
-	auto* server = std::get_if< TicketServer* >( &backend_ );
+	const auto* server = std::get_if< TicketServer* >( &backend_ );
 	if ( server == nullptr || *server == nullptr ) {
 		throw std::logic_error( "Local ticket server backend is not available" );
 	}

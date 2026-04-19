@@ -70,12 +70,12 @@ bool TicketServer::cancelReservation( ReservationId reservation_id ) {
 	cleanupExpiredReservations();
 
 	auto* res = findReservationById( reservation_id );
-	if ( !res ) {
+	if ( res == nullptr ) {
 		return false;
 	}
 
 	Ticket* ticket = findTicketById( res->ticket_id );
-	if ( ticket && ticket->status == TicketStatus::Reserved ) {
+	if ( ( ticket != nullptr ) && ticket->status == TicketStatus::Reserved ) {
 		ticket->status = TicketStatus::Available;
 	}
 
@@ -90,7 +90,7 @@ std::variant< PurchaseSuccess, PurchaseFailure > TicketServer::finalizePurchase(
 	cleanupExpiredReservations();
 
 	Reservation* res = findReservationById( reservation_id );
-	Ticket* ticket   = res ? findTicketById( res->ticket_id ) : nullptr;
+	Ticket* ticket   = ( res != nullptr ) ? findTicketById( res->ticket_id ) : nullptr;
 
 	auto fail = [ & ]( PurchaseError err, std::string msg ) {
 		if ( ticket && ticket->status == TicketStatus::Reserved ) {
@@ -101,7 +101,7 @@ std::variant< PurchaseSuccess, PurchaseFailure > TicketServer::finalizePurchase(
 		    .error = err, .returned_coins = inserted_coins.getCoins(), .message = std::move( msg ) };
 	};
 
-	if ( !res || !ticket || ticket->status != TicketStatus::Reserved ) {
+	if ( ( res == nullptr ) || ( ticket == nullptr ) || ticket->status != TicketStatus::Reserved ) {
 		if ( isReservationExpired( reservation_id ) ) {
 			return fail( PurchaseError::ReservationExpired, "Reservation expired" );
 		}

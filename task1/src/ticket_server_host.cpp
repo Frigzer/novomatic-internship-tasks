@@ -24,10 +24,9 @@ namespace {
 using asio::ip::tcp;
 using Json = nlohmann::json;
 
-std::mutex g_log_mutex;
-
 void logMessage( const std::string& message ) {
-	std::lock_guard< std::mutex > lock( g_log_mutex );
+	static std::mutex log_mutex;
+	std::lock_guard< std::mutex > lock( log_mutex );
 	std::cout << "[server] " << message << '\n';
 }
 
