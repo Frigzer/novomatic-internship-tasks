@@ -20,15 +20,15 @@ ImGuiSfmlContext::~ImGuiSfmlContext() noexcept {
 	}
 }
 
-void ImGuiSfmlContext::processEvent( sf::RenderWindow& window, const sf::Event& event ) const {
+void ImGuiSfmlContext::processEvent( sf::RenderWindow& window, const sf::Event& event ) {
 	ImGui::SFML::ProcessEvent( window, event );
 }
 
-void ImGuiSfmlContext::update( sf::RenderWindow& window, sf::Time deltaTime ) const {
+void ImGuiSfmlContext::update( sf::RenderWindow& window, sf::Time deltaTime ) {
 	ImGui::SFML::Update( window, deltaTime );
 }
 
-void ImGuiSfmlContext::render( sf::RenderWindow& window ) const {
+void ImGuiSfmlContext::render( sf::RenderWindow& window ) {
 	ImGui::SFML::Render( window );
 }
 

@@ -54,8 +54,12 @@ int BlueprintFileManager::selectedInputIndex() const noexcept {
 }
 
 void BlueprintFileManager::setSelectedInputIndex( int index ) {
+	if ( index < 0 || index >= static_cast< int >( inputFiles_.size() ) ) {
+		throw std::out_of_range( "Invalid input file index" );
+	}
+
 	selectedInputIndex_ = index;
-	syncSelectedInputFile();
+	inputPath_          = inputFiles_[ selectedInputIndex_ ];
 }
 
 std::string BlueprintFileManager::selectedInputLabel() const {
@@ -101,16 +105,16 @@ void BlueprintFileManager::saveGraph( const Graph& graph ) const {
 void BlueprintFileManager::syncSelectedInputFile() {
 	if ( inputFiles_.empty() ) {
 		selectedInputIndex_ = -1;
+		inputPath_.clear();
 		return;
 	}
 
 	if ( const auto it = std::ranges::find( inputFiles_, inputPath_ ); it != inputFiles_.end() ) {
 		selectedInputIndex_ = static_cast< int >( std::distance( inputFiles_.begin(), it ) );
-	} else if ( selectedInputIndex_ < 0 || selectedInputIndex_ >= static_cast< int >( inputFiles_.size() ) ) {
+	} else {
 		selectedInputIndex_ = 0;
+		inputPath_          = inputFiles_.front();
 	}
-
-	inputPath_ = inputFiles_[ selectedInputIndex_ ];
 }
 
 bool BlueprintFileManager::isJsonFile( const std::filesystem::path& path ) {

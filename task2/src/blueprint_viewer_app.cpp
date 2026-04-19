@@ -70,7 +70,7 @@ void BlueprintViewerApp::initializeOutputFileNameBuffer() {
 
 void BlueprintViewerApp::processEvents() {
 	while ( const std::optional event = window_.pollEvent() ) {
-		imguiContext_.processEvent( window_, *event );
+		ImGuiSfmlContext::processEvent( window_, *event );
 		handleEvent( *event );
 	}
 }
@@ -163,8 +163,8 @@ void BlueprintViewerApp::handleMouseMoveEvent( const sf::Event::MouseMoved& even
 }
 
 void BlueprintViewerApp::update( sf::Time deltaTime ) {
-	imguiContext_.update( window_, deltaTime );
-	const auto panelResult = panel_.draw( makePanelState() );
+	ImGuiSfmlContext::update( window_, deltaTime );
+	const auto panelResult = BlueprintViewerPanel::draw( makePanelState() );
 	handlePanelResult( panelResult );
 }
 
@@ -173,7 +173,7 @@ void BlueprintViewerApp::render() {
 	window_.setView( viewController_.view() );
 	GraphRenderer::draw( window_, graph_, font_ );
 	window_.setView( window_.getDefaultView() );
-	imguiContext_.render( window_ );
+	ImGuiSfmlContext::render( window_ );
 	window_.display();
 }
 

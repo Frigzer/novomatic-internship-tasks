@@ -68,7 +68,6 @@ private:
 	GraphViewController viewController_;
 	ImGuiSfmlContext imguiContext_;
 	BlueprintFileManager fileManager_;
-	BlueprintViewerPanel panel_;
 	LayoutEngine::Config layoutConfig_;
 
 	sf::Font font_;

@@ -6,44 +6,36 @@ namespace task2 {
 
 namespace {
 
+struct GuiLimits {
+	static constexpr float MarginMin = 0.0f;
+	static constexpr float MarginMax = 500.0f;
+
+	static constexpr float LayerSpacingMin = 50.0f;
+	static constexpr float LayerSpacingMax = 600.0f;
+
+	static constexpr float NodeSpacingMin = 20.0f;
+	static constexpr float NodeSpacingMax = 300.0f;
+
+	static constexpr float ComponentSpacingMin = 50.0f;
+	static constexpr float ComponentSpacingMax = 500.0f;
+
+	static constexpr float DefaultWidth  = 400.0f;
+	static constexpr float DefaultHeight = 550.0f;
+};
+
 [[nodiscard]] bool isValidSelection( const BlueprintViewerPanel::State& state ) {
 	return state.selectedInputIndex >= 0 && state.selectedInputIndex < static_cast< int >( state.inputFiles.size() );
 }
 
-}  // namespace
-
-BlueprintViewerPanel::Result BlueprintViewerPanel::draw( State state ) const {
-	using GL = GuiLimits;
-
-	Result result;
-
-	ImGui::SetNextWindowSize( { GL::DefaultWidth, GL::DefaultHeight }, ImGuiCond_FirstUseEver );
-	ImGui::Begin( "Controls" );
-
-	drawInputSection( state, result );
-	ImGui::Separator();
-
-	drawLayoutSection( state.layoutConfig );
-	ImGui::Separator();
-
-	drawGraphActionSection( result );
-	drawViewActionSection( result );
-	ImGui::Separator();
-
-	drawGraphStatsSection( state );
-	ImGui::Separator();
-
-	drawPathsSection( state );
-	ImGui::Separator();
-
-	drawControlsHelpSection();
-	drawHoveredNodeTooltip( state );
-
-	ImGui::End();
-	return result;
+bool hasSelectedInputFile( const BlueprintViewerPanel::State& state ) {
+	return isValidSelection( state );
 }
 
-std::string BlueprintViewerPanel::selectedInputLabel( const State& state ) {
+std::string makeCompactPathLabel( const std::filesystem::path& path ) {
+	return path.parent_path().filename().string() + "/" + path.filename().string();
+}
+
+std::string selectedInputLabel( const BlueprintViewerPanel::State& state ) {
 	if ( !hasSelectedInputFile( state ) ) {
 		return "<none>";
 	}
@@ -51,15 +43,7 @@ std::string BlueprintViewerPanel::selectedInputLabel( const State& state ) {
 	return state.inputFiles[ state.selectedInputIndex ].filename().string();
 }
 
-std::string BlueprintViewerPanel::makeCompactPathLabel( const std::filesystem::path& path ) {
-	return path.parent_path().filename().string() + "/" + path.filename().string();
-}
-
-bool BlueprintViewerPanel::hasSelectedInputFile( const State& state ) {
-	return isValidSelection( state );
-}
-
-void BlueprintViewerPanel::drawInputSection( State state, Result& result ) const {
+void drawInputSection( BlueprintViewerPanel::State state, BlueprintViewerPanel::Result& result ) {
 	if ( ImGui::Button( "Refresh input files" ) ) {
 		result.refreshInputFilesRequested = true;
 	}
@@ -91,7 +75,7 @@ void BlueprintViewerPanel::drawInputSection( State state, Result& result ) const
 	ImGui::InputText( "Output file name", state.outputFileNameBuffer.data(), state.outputFileNameBuffer.size() );
 }
 
-void BlueprintViewerPanel::drawLayoutSection( LayoutEngine::Config& layoutConfig ) const {
+void drawLayoutSection( LayoutEngine::Config& layoutConfig ) {
 	using GL = GuiLimits;
 
 	ImGui::SliderFloat( "Margin X", &layoutConfig.margin_x, GL::MarginMin, GL::MarginMax );
@@ -102,7 +86,7 @@ void BlueprintViewerPanel::drawLayoutSection( LayoutEngine::Config& layoutConfig
 	                    GL::ComponentSpacingMax );
 }
 
-void BlueprintViewerPanel::drawGraphActionSection( Result& result ) const {
+void drawGraphActionSection( BlueprintViewerPanel::Result& result ) {
 	if ( ImGui::Button( "Load JSON" ) ) {
 		result.loadGraphRequested = true;
 	}
@@ -118,7 +102,7 @@ void BlueprintViewerPanel::drawGraphActionSection( Result& result ) const {
 	}
 }
 
-void BlueprintViewerPanel::drawViewActionSection( Result& result ) const {
+void drawViewActionSection( BlueprintViewerPanel::Result& result ) {
 	if ( ImGui::Button( "Reset View" ) ) {
 		result.resetViewRequested = true;
 	}
@@ -129,25 +113,25 @@ void BlueprintViewerPanel::drawViewActionSection( Result& result ) const {
 	}
 }
 
-void BlueprintViewerPanel::drawGraphStatsSection( const State& state ) const {
+void drawGraphStatsSection( const BlueprintViewerPanel::State& state ) {
 	ImGui::Text( "Nodes: %zu", state.nodeCount );
 	ImGui::Text( "Edges: %zu", state.edgeCount );
 	ImGui::TextWrapped( "Status: %s", state.statusMessage.c_str() );
 }
 
-void BlueprintViewerPanel::drawPathsSection( const State& state ) const {
+void drawPathsSection( const BlueprintViewerPanel::State& state ) {
 	ImGui::TextDisabled( "Input:  %s", makeCompactPathLabel( state.inputDirectory ).c_str() );
 	ImGui::TextDisabled( "Output: %s", makeCompactPathLabel( state.outputDirectory ).c_str() );
 }
 
-void BlueprintViewerPanel::drawControlsHelpSection() const {
+void drawControlsHelpSection() {
 	ImGui::Text( "Controls:" );
 	ImGui::BulletText( "Zoom:  Wheel or Keypad +/-" );
 	ImGui::BulletText( "Pan:   MMB or Ctrl + LPM" );
 	ImGui::BulletText( "Reset: 'Reset View' or 'Fit Graph'" );
 }
 
-void BlueprintViewerPanel::drawHoveredNodeTooltip( const State& state ) const {
+void drawHoveredNodeTooltip( const BlueprintViewerPanel::State& state ) {
 	if ( ImGui::GetIO().WantCaptureMouse || !state.hoveredNode.has_value() ) {
 		return;
 	}
@@ -156,6 +140,39 @@ void BlueprintViewerPanel::drawHoveredNodeTooltip( const State& state ) const {
 	ImGui::Text( "%s", state.hoveredNode->name.c_str() );
 	ImGui::TextDisabled( "Node ID: %d", state.hoveredNode->id );
 	ImGui::EndTooltip();
+}
+
+}  // namespace
+
+BlueprintViewerPanel::Result BlueprintViewerPanel::draw( State state ) {
+	using GL = GuiLimits;
+
+	Result result;
+
+	ImGui::SetNextWindowSize( { GL::DefaultWidth, GL::DefaultHeight }, ImGuiCond_FirstUseEver );
+	ImGui::Begin( "Controls" );
+
+	drawInputSection( state, result );
+	ImGui::Separator();
+
+	drawLayoutSection( state.layoutConfig );
+	ImGui::Separator();
+
+	drawGraphActionSection( result );
+	drawViewActionSection( result );
+	ImGui::Separator();
+
+	drawGraphStatsSection( state );
+	ImGui::Separator();
+
+	drawPathsSection( state );
+	ImGui::Separator();
+
+	drawControlsHelpSection();
+	drawHoveredNodeTooltip( state );
+
+	ImGui::End();
+	return result;
 }
 
 }  // namespace task2

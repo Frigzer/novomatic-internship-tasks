@@ -16,9 +16,9 @@ public:
 	ImGuiSfmlContext( ImGuiSfmlContext&& )                 = delete;
 	ImGuiSfmlContext& operator=( ImGuiSfmlContext&& )      = delete;
 
-	void processEvent( sf::RenderWindow& window, const sf::Event& event ) const;
-	void update( sf::RenderWindow& window, sf::Time deltaTime ) const;
-	void render( sf::RenderWindow& window ) const;
+	static void processEvent( sf::RenderWindow& window, const sf::Event& event );
+	static void update( sf::RenderWindow& window, sf::Time deltaTime );
+	static void render( sf::RenderWindow& window );
 
 private:
 	bool initialized_{ false };
