@@ -5,6 +5,7 @@ compiler.cppstd=23
 build_type=Debug
 
 [conf]
+tools.system.package_manager:mode=install
 tools.cmake.cmaketoolchain:generator=Ninja
 
 [tool_requires]
