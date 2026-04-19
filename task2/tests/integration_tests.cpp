@@ -63,14 +63,14 @@ std::vector< std::pair< int, int > > sortedEdges( const Graph& graph ) {
 
 TEST( IntegrationTests, AllBundledInputGraphsLoadWithExpectedSizes ) {
 	const std::array< InputExpectation, 8 > cases{ {
-	    { "branch.json", 4U, 3U },
-	    { "chain.json", 4U, 3U },
-	    { "cycle.json", 4U, 4U },
-	    { "dense_graph.json", 6U, 8U },
-	    { "diamond.json", 5U, 5U },
-	    { "long_labels.json", 4U, 3U },
-	    { "sample_graph.json", 4U, 3U },
-	    { "two_components.json", 7U, 5U },
+	    { .fileName = "branch.json", .nodeCount = 4U, .edgeCount = 3U },
+	    { .fileName = "chain.json", .nodeCount = 4U, .edgeCount = 3U },
+	    { .fileName = "cycle.json", .nodeCount = 4U, .edgeCount = 4U },
+	    { .fileName = "dense_graph.json", .nodeCount = 6U, .edgeCount = 8U },
+	    { .fileName = "diamond.json", .nodeCount = 5U, .edgeCount = 5U },
+	    { .fileName = "long_labels.json", .nodeCount = 4U, .edgeCount = 3U },
+	    { .fileName = "sample_graph.json", .nodeCount = 4U, .edgeCount = 3U },
+	    { .fileName = "two_components.json", .nodeCount = 7U, .edgeCount = 5U },
 	} };
 
 	for ( const auto& testCase : cases ) {
