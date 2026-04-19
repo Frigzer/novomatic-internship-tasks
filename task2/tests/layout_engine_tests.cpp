@@ -114,7 +114,7 @@ TEST( LayoutEngineTests, AssignsConfiguredXCoordinatesForChainLayers ) {
 }
 
 TEST( LayoutEngineTests, RecomputesCoordinatesEvenWhenNodesAlreadyHavePositions ) {
-	Graph graph = makeChainGraph();
+	Graph graph            = makeChainGraph();
 	graph.findNode( 1 )->x = 900.0f;
 	graph.findNode( 1 )->y = 700.0f;
 	graph.findNode( 2 )->x = 800.0f;

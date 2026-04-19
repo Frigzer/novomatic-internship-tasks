@@ -204,7 +204,7 @@ void drawBackwardEdge( sf::RenderTarget& target, sf::Vector2f start, sf::Vector2
 	path[ 2 ].position = { exitX, detourY };
 	path[ 3 ].position = { entryX, detourY };
 	path[ 4 ].position = { entryX, end.y };
-	path[ 5 ].position = end; // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+	path[ 5 ].position = end;  // NOLINT(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
 	colorizePath( path, VC::ColorEdge );
 
 	target.draw( path );
