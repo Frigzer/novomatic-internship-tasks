@@ -101,7 +101,7 @@ PurchaseSuccess purchaseSuccessFromJson( const Json& json ) {
 	                        .ticket_type = json.at( "ticket_type" ).get< std::string >(),
 	                        .customer    = customerFromJson( json.at( "customer" ) ),
 	                        .change      = ChangeResult{ .total = change.at( "total" ).get< Money >(),
-	                                                    .coins = coinMapFromJson( change.at( "coins" ) ) } };
+	                                                     .coins = coinMapFromJson( change.at( "coins" ) ) } };
 }
 
 PurchaseFailure purchaseFailureFromJson( const Json& json ) {
@@ -126,9 +126,9 @@ std::vector< TicketAvailability > availabilityListFromJson( const Json& json ) {
 	result.reserve( json.size() );
 
 	for ( const auto& entry : json ) {
-		result.push_back( TicketAvailability{ .type = entry.at( "type" ).get< std::string >(),
-		                                     .price = entry.at( "price" ).get< Money >(),
-		                                     .available_count = entry.at( "available_count" ).get< int >() } );
+		result.push_back( TicketAvailability{ .type            = entry.at( "type" ).get< std::string >(),
+		                                      .price           = entry.at( "price" ).get< Money >(),
+		                                      .available_count = entry.at( "available_count" ).get< int >() } );
 	}
 
 	return result;
@@ -136,14 +136,10 @@ std::vector< TicketAvailability > availabilityListFromJson( const Json& json ) {
 
 std::string toString( PurchaseError error ) {
 	switch ( error ) {
-		case PurchaseError::ReservationNotFound:
-			return "reservation_not_found";
-		case PurchaseError::ReservationExpired:
-			return "reservation_expired";
-		case PurchaseError::InsufficientFunds:
-			return "insufficient_funds";
-		case PurchaseError::CannotMakeChange:
-			return "cannot_make_change";
+	case PurchaseError::ReservationNotFound: return "reservation_not_found";
+	case PurchaseError::ReservationExpired: return "reservation_expired";
+	case PurchaseError::InsufficientFunds: return "insufficient_funds";
+	case PurchaseError::CannotMakeChange: return "cannot_make_change";
 	}
 
 	throw std::runtime_error( "Unknown purchase error enum value" );

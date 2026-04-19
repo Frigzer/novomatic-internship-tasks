@@ -9,13 +9,13 @@
 namespace task1 {
 
 struct ServerSeedData {
-    std::vector<Ticket> tickets;
-    CoinInventory cashbox;
+	std::vector< Ticket > tickets;
+	CoinInventory cashbox;
 };
 
 class ServerSeedDataLoader {
 public:
-    [[nodiscard]] static ServerSeedData loadFromFile(const std::filesystem::path& file_path);
+	[[nodiscard]] static ServerSeedData loadFromFile( const std::filesystem::path& file_path );
 };
 
 }  // namespace task1

@@ -144,7 +144,8 @@ void TicketServer::cleanupExpiredReservations() {
 
 	std::erase_if( reservations_, [ & ]( const Reservation& res ) {
 		if ( res.expires_at <= now ) {
-			if ( Ticket* ticket = findTicketById( res.ticket_id ); ticket && ticket->status == TicketStatus::Reserved ) {
+			if ( Ticket* ticket = findTicketById( res.ticket_id );
+			     ticket && ticket->status == TicketStatus::Reserved ) {
 				ticket->status = TicketStatus::Available;
 			}
 			expired_reservation_ids_.insert( res.id );

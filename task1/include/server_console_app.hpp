@@ -13,7 +13,7 @@ public:
 
 private:
 	static constexpr std::uint16_t defaultPort = 5555;
-	
+
 	void parseArguments();
 	[[nodiscard]] bool shouldPrintHelp() const noexcept;
 	void printHelp() const;

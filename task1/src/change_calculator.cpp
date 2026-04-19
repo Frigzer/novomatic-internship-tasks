@@ -24,15 +24,14 @@ std::optional< ChangeResult > ChangeCalculator::computeMinimalCoinChange( Money 
 		coin_types.push_back( CoinType{ .denomination = denomination, .available_count = available_count } );
 	}
 
-	constexpr int unreachable = std::numeric_limits< int >::max() / 4;
-	const std::size_t type_count = coin_types.size();
+	constexpr int unreachable       = std::numeric_limits< int >::max() / 4;
+	const std::size_t type_count    = coin_types.size();
 	const std::size_t target_amount = static_cast< std::size_t >( amount );
 
 	std::vector< std::vector< int > > dp( type_count + 1, std::vector< int >( target_amount + 1, unreachable ) );
-	std::vector< std::vector< int > > chosen_counts( type_count + 1,
-	                                                std::vector< int >( target_amount + 1, -1 ) );
+	std::vector< std::vector< int > > chosen_counts( type_count + 1, std::vector< int >( target_amount + 1, -1 ) );
 
-	dp[ 0 ][ 0 ] = 0;
+	dp[ 0 ][ 0 ]            = 0;
 	chosen_counts[ 0 ][ 0 ] = 0;
 
 	for ( std::size_t type_index = 1; type_index <= type_count; ++type_index ) {
@@ -44,15 +43,14 @@ std::optional< ChangeResult > ChangeCalculator::computeMinimalCoinChange( Money 
 					break;
 				}
 
-				const std::size_t previous_amount =
-				    current_amount - static_cast< std::size_t >( used_value );
+				const std::size_t previous_amount = current_amount - static_cast< std::size_t >( used_value );
 				if ( dp[ type_index - 1 ][ previous_amount ] == unreachable ) {
 					continue;
 				}
 
 				const int candidate_coin_count = dp[ type_index - 1 ][ previous_amount ] + used_count;
 				if ( candidate_coin_count < dp[ type_index ][ current_amount ] ) {
-					dp[ type_index ][ current_amount ] = candidate_coin_count;
+					dp[ type_index ][ current_amount ]            = candidate_coin_count;
 					chosen_counts[ type_index ][ current_amount ] = used_count;
 				}
 			}
